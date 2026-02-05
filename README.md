@@ -4,8 +4,18 @@ Custom Rails application templates for rapid app setup. Based on Le Wagon bootca
 
 ## Quick Start
 
+### Requirements
+
+- **Ruby**: 3.1+ (3.2+ recommended for Rails 8)
+- **Rails**: 7.0+ or 8.0+
+- **PostgreSQL**: 12+
+- **Node.js**: 18+ (for asset compilation)
+- **Git**: Latest version
+- **Bundler**: 2.0+
+
 ### Rails 8 with Bootstrap
 ```bash
+# Assuming Rails 8 is already installed as the latest version.
 rails new my_app \
   -d postgresql \
   -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-8/bootstrap.rb \
@@ -14,6 +24,7 @@ rails new my_app \
 
 ### Rails 8 with Tailwind
 ```bash
+# Assuming Rails 8 is already installed as the latest version.
 rails new my_app \
   -d postgresql \
   -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-8/tailwind.rb \
@@ -22,6 +33,9 @@ rails new my_app \
 
 ### Rails 7 with Bootstrap
 ```bash
+# Check your installed Rails versions first:
+# Run `gem list rails` to see which Rails versions are installed `rails (8.1.2, 7.2.2, 7.1.6, 7.1.5.2)`
+# Then update the function with your specific 7.x version
 rails _7.2.2_ new my_app \
   -d postgresql \
   -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-7/bootstrap.rb \
@@ -371,15 +385,6 @@ Available shared modules (compatible with both Rails 7 & 8):
 - `image_processing.rb` - Image manipulation setup
 - `friendly_urls.rb` - SEO-friendly URLs with FriendlyId
 - `admin.rb` - Admin dashboard with ActiveAdmin
-
-## Requirements
-
-- **Ruby**: 3.1+ (3.2+ recommended for Rails 8)
-- **Rails**: 7.0+ or 8.0+
-- **PostgreSQL**: 12+
-- **Node.js**: 18+ (for asset compilation)
-- **Git**: Latest version
-- **Bundler**: 2.0+
 
 ## Local Development & Testing
 
