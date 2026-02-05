@@ -2,30 +2,6 @@
 
 Custom Rails application templates for rapid app setup. Based on Le Wagon bootcamp templates with extensive additions for production-ready applications.
 
-## Folder Structure for Reference
-rails-startup-templates/
-├── README.md
-├── LICENSE
-├── rails-8/
-│   ├── bootstrap.rb
-│   ├── custom.rb
-│   └── tailwind.rb
-├── rails-7/
-│   ├── bootstrap.rb
-│   ├── custom.rb
-│   └── tailwind.rb
-└── shared/
-    ├── active_storage.rb
-    ├── admin.rb
-    ├── dev_tools.rb
-    ├── devise.rb
-    ├── friendly_urls.rb
-    ├── image_processing.rb
-    ├── navbar.rb
-    ├── pagination.rb
-    ├── security.rb
-    └── testing.rb
-
 ## Quick Start
 
 ### Rails 8 with Bootstrap
@@ -405,10 +381,6 @@ Available shared modules (compatible with both Rails 7 & 8):
 - **Git**: Latest version
 - **Bundler**: 2.0+
 
-### Optional (for specific features)
-- **ImageMagick** or **libvips**: For image processing
-- **Redis**: For ActionCable, Solid Cache, or Solid Queue
-
 ## Local Development & Testing
 
 To test templates locally before pushing to GitHub:
@@ -509,8 +481,8 @@ Licensed under the MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- **Email**: dev@louisbourne.me
-- **Portfolio**: louisbourne.me
+- **Email**: [dev@louisbourne.me](mailto:dev@louisbourne.me)
+- **Portfolio**: [louisbourne.me](https://louisbourne.me)
 
 ---
 

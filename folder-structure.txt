@@ -1,0 +1,24 @@
+Folder Structure for Reference:
+
+rails-startup-templates/
+├── README.md
+├── LICENSE
+├── rails-8/
+│   ├── bootstrap.rb
+│   ├── custom.rb
+│   └── tailwind.rb
+├── rails-7/
+│   ├── bootstrap.rb
+│   ├── custom.rb
+│   └── tailwind.rb
+└── shared/
+    ├── active_storage.rb
+    ├── admin.rb
+    ├── dev_tools.rb
+    ├── devise.rb
+    ├── friendly_urls.rb
+    ├── image_processing.rb
+    ├── navbar.rb
+    ├── pagination.rb
+    ├── security.rb
+    └── testing.rb
