@@ -18,8 +18,7 @@ Custom Rails application templates for rapid app setup. Based on Le Wagon bootca
 # Assuming Rails 8 is already installed as the latest version.
 rails new my_app \
   -d postgresql \
-  -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-8/bootstrap.rb \
-  my_app
+  -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-8/bootstrap.rb
 ```
 
 ### Rails 8 with Tailwind
@@ -27,8 +26,7 @@ rails new my_app \
 # Assuming Rails 8 is already installed as the latest version.
 rails new my_app \
   -d postgresql \
-  -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-8/tailwind.rb \
-  my_app
+  -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-8/tailwind.rb
 ```
 
 ### Rails 7 with Bootstrap
@@ -38,8 +36,7 @@ rails new my_app \
 # Then update the function with your specific 7.x version
 rails _7.2.2_ new my_app \
   -d postgresql \
-  -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-7/bootstrap.rb \
-  my_app
+  -m https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/rails-7/bootstrap.rb
 ```
 
 ## What's Included
@@ -155,7 +152,7 @@ rails8-bootstrap() {
 
 rails8-tailwind() {
   # Tailwind + asks for extras
-  rails new "$1" -d postgresql --css=tailwind \
+  rails new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
@@ -183,7 +180,7 @@ rails8-tailwind-all() {
   DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
   FRIENDLY_URLS=true ADMIN=true \
-  rails new "$1" -d postgresql --css=tailwind \
+  rails new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
@@ -205,13 +202,14 @@ rails8-tailwind-min() {
   DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
   FRIENDLY_URLS=false ADMIN=false \
-  rails new "$1" -d postgresql --css=tailwind \
+  rails new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
 rails8-min() {
   # No CSS, no extras (bare Rails 8)
-  rails new "$1" -d postgresql
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/rails8-min.rb
 }
 
 ##############################################
@@ -226,7 +224,7 @@ rails7-bootstrap() {
 
 rails7-tailwind() {
   # Tailwind + asks for extras
-  rails _7.2.2_ new "$1" -d postgresql --css=tailwind \
+  rails _7.2.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
 }
 
@@ -254,7 +252,7 @@ rails7-tailwind-all() {
   DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
   FRIENDLY_URLS=true ADMIN=true \
-  rails _7.2.2_ new "$1" -d postgresql --css=tailwind \
+  rails _7.2.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
 }
 
@@ -276,13 +274,14 @@ rails7-tailwind-min() {
   DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
   FRIENDLY_URLS=false ADMIN=false \
-  rails _7.2.2_ new "$1" -d postgresql --css=tailwind \
+  rails _7.2.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
 }
 
 rails7-min() {
   # No CSS, no extras (bare Rails 7)
-  rails _7.2.2_ new "$1" -d postgresql
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/rails7-min.rb
 }
 ```
 
