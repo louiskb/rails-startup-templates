@@ -200,7 +200,7 @@ end
 # 2. Build out all the shared templates first before building the main templates.
 # 3. After finishing the primary code for the specific main template, add shared templates for interactive mode.
 # 4. Once all the templates are completed, create the shell functions inside /.zshrc
-
+# 5. Add all the shell functions into a text (.txt) file into the templates root project folder and push to GitHub.
 
 # OPTIONAL
 ########################
