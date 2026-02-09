@@ -3,6 +3,8 @@ Folder Structure for Reference:
 rails-startup-templates/
 ├── README.md
 ├── LICENSE
+├── folder-structure.txt
+├── shell-functions.txt
 ├── rails-8/
 │   ├── bootstrap.rb
 │   ├── custom.rb

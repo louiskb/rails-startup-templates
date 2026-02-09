@@ -1,2 +1,146 @@
 Shell Functions (zsh) for Reference
 
+##############################################
+# RAILS 8 - Interactive modes (prompts for extras)
+##############################################
+
+rails8-bootstrap() {
+  # Bootstrap + asks for extras
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
+}
+
+rails8-tailwind() {
+  # Tailwind + asks for extras
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
+}
+
+rails8-custom() {
+  # Asks CSS + asks for extras
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/custom.rb
+}
+
+##############################################
+# RAILS 8 - All-inclusive shortcuts (no prompts)
+##############################################
+
+rails8-bootstrap-all() {
+  # Bootstrap + all extras
+  DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
+  FRIENDLY_URLS=true ADMIN=true \
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
+}
+
+rails8-tailwind-all() {
+  # Tailwind + all extras
+  DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
+  FRIENDLY_URLS=true ADMIN=true \
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
+}
+
+##############################################
+# RAILS 8 - Minimal shortcuts (no extras, no prompts)
+##############################################
+
+rails8-bootstrap-min() {
+  # Bootstrap only (no extras)
+  DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
+  FRIENDLY_URLS=false ADMIN=false \
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
+}
+
+rails8-tailwind-min() {
+  # Tailwind only (no extras)
+  DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
+  FRIENDLY_URLS=false ADMIN=false \
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
+}
+
+rails8-min() {
+  # No CSS, no extras (bare Rails 8)
+  rails new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/rails8-min.rb
+}
+
+##############################################
+# RAILS 7 - Interactive modes (prompts for extras)
+##############################################
+
+rails7-bootstrap() {
+  # Bootstrap + asks for extras
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/bootstrap.rb
+}
+
+rails7-tailwind() {
+  # Tailwind + asks for extras
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
+}
+
+rails7-custom() {
+  # Asks CSS + asks for extras
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/custom.rb
+}
+
+##############################################
+# RAILS 7 - All-inclusive shortcuts (no prompts)
+##############################################
+
+rails7-bootstrap-all() {
+  # Bootstrap + all extras
+  DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
+  FRIENDLY_URLS=true ADMIN=true \
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/bootstrap.rb
+}
+
+rails7-tailwind-all() {
+  # Tailwind + all extras
+  DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
+  FRIENDLY_URLS=true ADMIN=true \
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
+}
+
+##############################################
+# RAILS 7 - Minimal shortcuts (no extras, no prompts)
+##############################################
+
+rails7-bootstrap-min() {
+  # Bootstrap only (no extras)
+  DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
+  FRIENDLY_URLS=false ADMIN=false \
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/bootstrap.rb
+}
+
+rails7-tailwind-min() {
+  # Tailwind only (no extras)
+  DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
+  FRIENDLY_URLS=false ADMIN=false \
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
+}
+
+rails7-min() {
+  # No CSS, no extras (bare Rails 7)
+  rails _7.2.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/rails7-min.rb
+}
+```
