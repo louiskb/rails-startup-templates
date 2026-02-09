@@ -34,7 +34,7 @@ end
 # Depending how the template was installed (either locally or remotely via GitHub) into the new rails app upon execution, the `source_path` method knows how to return the correct file path when combined with the `apply` method to install the correctly specified shared template during execution of the new Rails app.
 def source_path(file)
   if __FILE__ =~ %r{https?://}
-    "https://raw.githubusercontent.com/louiskb/rails-templates/main/#{file}"
+    "https://raw.githubusercontent.com/louiskb/rails-startup-templates/refs/heads/master/#{file}"
   else
     "#{__dir__}/#{file}"
   end
@@ -64,6 +64,7 @@ run "rm -rf app/assets/stylesheets"
 run "rm -rf vendor"
 run "curl -L https://github.com/lewagon/rails-stylesheets/archive/rails-8.zip > stylesheets.zip"
 run "unzip stylesheets.zip -d app/assets && rm -f stylesheets.zip && rm -f app/assets/rails-stylesheets-rails-8/README.md"
+run "mv app/assets/rails-stylesheets-rails-8 app/assets/stylesheets"
 
 # Sprockets manifest (required for Rails 8)
 run "mkdir -p app/assets/config"
