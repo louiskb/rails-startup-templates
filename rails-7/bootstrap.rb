@@ -26,7 +26,7 @@ def should_install?(feature, prompt)
   return false if env_value == 'false'
 
   # ENV var not set (nil) - ask user interactively
-  # Returns true if user types 'y', false if 'n'
+  # `yes?()` returns true if user types 'y' / 'yes' / 'Y' / 'YES', false if 'n' / 'no' / 'N' / 'NO'. If user hits [Enter] without an answer or inputs anything else = false and defaults to No.
   yes?(prompt)
 end
 
