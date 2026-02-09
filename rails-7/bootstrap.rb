@@ -115,7 +115,7 @@ markdown_readme_content = <<~MARKDOWN
 MARKDOWN
 file "README.md", markdown_readme_content, force: true
 
-# Generators (SHOULD THIS BE OPTIONAL?)
+# Generators
 generators = <<~RUBY
   config.generators do |generate|
     generate.assets false
@@ -229,10 +229,6 @@ end
 
 
 # TODO:
-#
-# EXTRA TODO:
-# - Generators (SHOULD THIS BE OPTIONAL?) - inside `bootstrap.rb`.
-#
 # 1. Build out all the shared templates first before building the main templates.
 # 2. After finishing the primary code for the specific main template, add shared templates for interactive mode.
 # 3. Once all the templates are completed, create the shell functions inside /.zshrc
