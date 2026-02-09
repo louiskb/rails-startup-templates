@@ -1,8 +1,15 @@
 # rails-7/bootstrap.rb
 # Rails 7 Bootstrap Template
 
+# LOGIC FLOW:
+# 1. Setup core styling framework, gems, and setup (non-interactive).
+# 2. Interactive: Ask about OPTIONAL gems (devise, etc.).
+# 3. `after_bundle`: bundle install ONCE, run generators, and further setup.
+
 # Kill Spring if running (macOS)
 run "if uname | grep -q 'Darwin'; then pgrep spring | xargs kill -9; fi"
+
+# STEP 1: CORE SETUP
 
 # Helper function for ENV vars
 def should_install?(feature, prompt)
@@ -119,7 +126,26 @@ RUBY
 
 environment generators
 
-# After bundle
+# STEP 2: INTERACTIVE SETUP - Add optional gems to Gemfile
+# TODO: Add more interactive gems here later:
+# User says YES → add gem to Gemfile
+# User says NO → skip (don't add gem)
+
+# devise
+if should_install?('devise', "install Devise? (y/n)")
+  # Add devise gem to Gemfile (before `bundle install`)
+  # Note the blank line inside the heredoc to keep Gemfile formatting clean.
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "devise"
+
+    RUBY
+  end
+end
+
+# STEP 3: AFTER BUNDLE
+# Single `bundle install` and further setup including optional shared templates
+
 after bundle do
   # Generators: db + simple form + pages controller
   rails_command "db:drop db:create db:migrate"
@@ -182,25 +208,27 @@ after bundle do
   # Rubocop
   run "curl -L https://raw.githubusercontent.com/lewagon/rails-templates/master/.rubocop.yml > rubocop.yml"
 
+  # APPLY shared templates ONLY if we added their gems during interactive setup.
+  # TODO: Add more conditional gem checks for each new shared template:
+  # File.read() checks if gem was added in Step 2.
+
+  # shared/devise.rb
+  if File.read("Gemfile").include?("gem \"devise\"")
+    # Gem was added → run shared/devise.rb shared template setup.
+    apply source_path("shared/devise.rb")
+  end
+
   # Git
   git :init
   git add: "."
   git commit: "-m 'Initial commit with Bootstrap template.'"
 end
 
-# Interactive mode
-# Devise - interactive
-if should_install?('devise', "Install Devise? (y/n)")
-  apply source_path("shared/devise.rb")
-end
-
 
 # TODO:
-# 1. Move the below code into the appropriate shared template files.
-# 2. Build out all the shared templates first before building the main templates.
-# 3. After finishing the primary code for the specific main template, add shared templates for interactive mode.
-# 4. Once all the templates are completed, create the shell functions inside /.zshrc
-# 5. Add all the shell functions into a text (.txt) file into the templates root project folder and push to GitHub.
-
-# OPTIONAL
-########################
+#
+# EXTRA TODO: Bootstrap button conditional and # Generators (SHOULD THIS BE OPTIONAL?)
+#
+# 1. Build out all the shared templates first before building the main templates.
+# 2. After finishing the primary code for the specific main template, add shared templates for interactive mode.
+# 3. Once all the templates are completed, create the shell functions inside /.zshrc
