@@ -58,8 +58,8 @@ end
 # Devise views
 generate("devise:views")
 
-# Style cancel account link → Bootstrap button
-if File.exist?("app/views/devise/registrations/edit.html.erb")
+# Style cancel account link → Bootstrap button (only works if Bootstrap is installed)
+if File.exist?("app/views/devise/registrations/edit.html.erb") && File.read("Gemfile").include?("gem \"bootstrap\"")
   link_to = <<~HTML
     <p>Unhappy? <%= link_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete %></p>
   HTML

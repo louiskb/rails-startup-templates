@@ -231,7 +231,6 @@ end
 # TODO:
 #
 # EXTRA TODO:
-# - Bootstrap button conditional should only be if using Bootstrap inside `devise.rb`.
 # - Generators (SHOULD THIS BE OPTIONAL?) - inside `bootstrap.rb`.
 #
 # 1. Build out all the shared templates first before building the main templates.
