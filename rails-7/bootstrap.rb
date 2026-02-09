@@ -146,7 +146,7 @@ end
 # STEP 3: AFTER BUNDLE
 # Single `bundle install` and further setup including optional shared templates
 
-after bundle do
+after_bundle do
   # Generators: db + simple form + pages controller
   rails_command "db:drop db:create db:migrate"
   generate("simple_form:install", "--bootstrap")
@@ -218,16 +218,21 @@ after bundle do
     apply source_path("shared/devise.rb")
   end
 
+  # Run all migrations towards the end of `after_bundle`.
+  rails_command "db:migrate"
+
   # Git
   git :init
   git add: "."
-  git commit: "-m 'Initial commit with Bootstrap template.'"
+  git commit: "-m 'Initial commit and new rails app setup with Bootstrap template.'"
 end
 
 
 # TODO:
 #
-# EXTRA TODO: Bootstrap button conditional and # Generators (SHOULD THIS BE OPTIONAL?)
+# EXTRA TODO:
+# - Bootstrap button conditional should only be if using Bootstrap inside `devise.rb`.
+# - Generators (SHOULD THIS BE OPTIONAL?) - inside `bootstrap.rb`.
 #
 # 1. Build out all the shared templates first before building the main templates.
 # 2. After finishing the primary code for the specific main template, add shared templates for interactive mode.
