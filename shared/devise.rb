@@ -28,7 +28,11 @@ if !gemfile.include?('gem "devise"') && !gemfile.include?("gem 'devise'")
 
   # `bundle install` ONLY if it's needed (bundle check fails → bundle install).
   # `bundle check` compares Gemfile vs Gemfile.lock to see if they're the same.
-  run "bundle check" || run "bundle install"
+  # run "bundle check" || run "bundle install"
+  # `system()` method runs shell command and returns true/false. Returns `true` if exit code 0 (success), `false` otherwise. `system()` always preferred for conditionals (e.g. unless system(...)) as it returns boolean.
+  # `run` method typically runs shell command, prints output, continues. If it runs a shell command that returns a success code (shell exits 0 → returns empty string ("") = truthy vs shell exits 1 → returns nil = falsy), ultimately returning true/false, then `run` can be used in conditionals too. However, `system()` is the preferred method for conditional logic as by default it returns a boolean.
+  # For reference, the line's logic below is the same as `run "bundle check" || run "bundle install"`
+  run "bundle install" unless system("bundle check")
 end
 
 # Devise:install generator
