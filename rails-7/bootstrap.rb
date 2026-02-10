@@ -141,7 +141,7 @@ environment generators
 # User says NO → skip (don't add gem)
 
 # devise
-if should_install?('devise', "install Devise? (y/n)")
+if should_install?("devise", "install Devise? (y/n)")
   # Add devise gem to Gemfile (before `bundle install`)
   # Note the blank line inside the heredoc to keep Gemfile formatting clean.
   inject_into_file "Gemfile", before: "group :development, :test do" do
@@ -150,6 +150,11 @@ if should_install?('devise', "install Devise? (y/n)")
 
     RUBY
   end
+end
+
+# navbar
+if should_install?("navbar", "install NavBar? (y/n)")
+  run "curl -L https://raw.githubusercontent.com/lewagon/awesome-navbars/master/templates/_navbar_wagon.html.erb > app/views/shared/_navbar.html.erb"
 end
 
 # STEP 3: AFTER BUNDLE
@@ -240,6 +245,13 @@ after_bundle do
     apply source_path("shared/devise.rb")
     git add: "."
     git commit: "-m 'feat: install devise.'"
+  end
+
+  # shared/navbar.rb
+  if File.exist?("app/views/shared/_navbar.html.erb")
+    apply source_path("shared/navbar.rb")
+    git add: "."
+    git commit: "-m 'feat: add NavBar."
   end
 
   # Run all migrations towards the end of `after_bundle`.
