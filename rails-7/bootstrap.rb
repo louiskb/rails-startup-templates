@@ -36,12 +36,15 @@ def source_path(file)
   if __FILE__ =~ %r{https?://}
     "https://raw.githubusercontent.com/louiskb/rails-startup-templates/refs/heads/master/#{file}"
   else
-    # "#{__dir__}/#{file}"
-    # `File.expand_path` turns "short paths" (like ../foo.rb) into "full paths" (like /home/user/project/foo.rb). It ignores where your terminal is and uses a safe starting point.
-    # 1st argument: `../#{file}` = go up one folder, then to `file` e.g. `devise.rb`.
-    # 2nd argument: folder of THIS Ruby file (safe base, ignores `cd` changes).
-    # Result: full path to sibling file e.g. from rails-startup-template/rails-7/devise.rb to rails-startup-templates/shared/devise.rb
-    File.expand_path(".../#{file}", __dir__)
+    # `File.expand_path` converts a relative path name (short paths like `../foo.rb`) into an absolute path name (full paths like `/home/user/project/foo.rb`). It ignores where your terminal is and uses a safe starting point.
+    # Accepts 1-2 string arguments `File.expand_path(file_name, dir_string) → string.`
+    # `file_name` (required): The path to expand (relative or absolute). Defaults to empty string if omitted (returns dir_string).
+    # `dir_string` (optional): Base directory for relative `file_name`. Defaults to Dir.pwd (current working directory). The base directory (i.e. `__dir__`) is the folder containing the current Ruby template file (e.g. `bootstrap.rb`).
+    # Order matters: unlike `File.join`, the base comes second (File.expand_path('foo', '/bar') → '/bar/foo').
+    # 2nd argument: __dir__ = `/rails-startup-templates/rails-7` (bootstrap.rb's folder).
+    # 1st argument: `../#{file}` = `../devise.rb` (up one from rails-7 → rails-startup-templates, then → `devise.rb`).
+    # It does not reach `shared/devise.rb` with the pure `../#{file}` as that stops at the root + `file` BUT the argument value passed into `file` is `shared/devise.rb`. Therefore, the result is the full path from `rails-startup-template/rails-7/devise.rb` to `rails-startup-templates/shared/devise.rb` in the sibling folder.
+    File.expand_path("../#{file}", __dir__)
   end
 end
 
