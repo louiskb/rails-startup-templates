@@ -247,11 +247,14 @@ after_bundle do
 
   # Git
   git add: "."
-  git commit: "-m 'feat: final migration after initial setup complete.'"
+  git commit: "-m 'feat: add migration after initial setup.'"
 end
 
 
 # TODO:
+#
+# Fix devise `db:migrate` conditional. Devised shared template does not detect if being called from standalone or main template.
+#
 # 1. Build out all the shared templates first before building the main templates.
 # 2. After finishing the primary code for the specific main template, add shared templates for interactive mode.
 # 3. Once all the templates are completed, create the shell functions inside /.zshrc

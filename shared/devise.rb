@@ -79,12 +79,20 @@ if File.exist?("app/views/devise/registrations/edit.html.erb") && File.read("Gem
 end
 
 # STANDALONE MIGRATE SUPPORT
-# Detect if shared template is called from standalone vs from main template.
-if __FILE__ =~ %r{shared/devise.rb$} # Standalone call. Regex with escaping /shared\/devise\.rb$/ for reference. `$` = end anchor, matches only if string ends with "shared/devise.rb".
-  say "Standalone install → running migrations...", :blue
-  rails_command "db:migrate"
+# Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
+# Logic stored inside `in_main_template` variable:
+# `caller_locations` is a Ruby built-in method that returns an array of callstack frames which has reference to "who called this code?".
+# The chained `any?` method returns `true` or `false`, depending if any of the iterated callstack frames inside the `caller_locations` array meet the criteria set inside the inline block. Returns `true` if any iteration returns truthy.
+# This specific block iterates over caller_locations (array), taking `loc` as a block parameter and returning `true` if any location matches the conditions.
+# The block checks `loc.label` that matches the calling method `after_bundle` or `loc.path`(regex match for "bootstrap.rb" or other main template file names).
+# `any?` short-circuits on the first truthy block result.
+in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ /bootstrap\.rb/ }
+
+if in_main_template
+  say "Main template (bootstrap.rb) → skip migrate", :blue
 else
-  say "Main template mode → migrations handled by main template", :blue
+  say "Standalone (rails app:template) → running migrate...", :blue
+  rails_command "db:migrate"
 end
 
 say "✅ Devise installation complete!", :green
