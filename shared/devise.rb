@@ -89,9 +89,9 @@ end
 in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ /bootstrap\.rb/ }
 
 if in_main_template
-  say "Main template (bootstrap.rb) → skip migrate", :blue
+  say "Main template detected → skipping migrations", :yellow
 else
-  say "Standalone (rails app:template) → running migrate...", :blue
+  say "Standalone mode → executing db:migrate...", :blue
   rails_command "db:migrate"
 end
 
