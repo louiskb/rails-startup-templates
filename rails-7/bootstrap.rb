@@ -225,6 +225,11 @@ after_bundle do
   # Rubocop
   run "curl -L https://raw.githubusercontent.com/lewagon/rails-templates/master/.rubocop.yml > rubocop.yml"
 
+  # Initialize Git and make first commit.
+  git :init
+  git add: "."
+  git commit: "-m 'initial commit: new rails app setup with Bootstrap template.'"
+
   # APPLY shared templates ONLY if we added their gems during interactive setup.
   # TODO: Add more conditional gem checks for each new shared template:
   # File.read() checks if gem was added in Step 2.
@@ -233,15 +238,16 @@ after_bundle do
   if File.read("Gemfile").include?("gem \"devise\"")
     # Gem was added → run shared/devise.rb shared template setup.
     apply source_path("shared/devise.rb")
+    git add: "."
+    git commit: "-m 'feat: install devise.'"
   end
 
   # Run all migrations towards the end of `after_bundle`.
   rails_command "db:migrate"
 
   # Git
-  git :init
   git add: "."
-  git commit: "-m 'Initial commit and new rails app setup with Bootstrap template.'"
+  git commit: "-m 'feat: final migration after initial setup complete.'"
 end
 
 
