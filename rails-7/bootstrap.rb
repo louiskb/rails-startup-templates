@@ -238,11 +238,6 @@ end
 
 
 # TODO:
-#
-# - What does `File.expand_path(".../#{file}", __dir__)` line 40 do? What is the `expand_path` method?
-# Then test bootstrap main template with devise shared template.
-# Commit changes with git.
-#
 # 1. Build out all the shared templates first before building the main templates.
 # 2. After finishing the primary code for the specific main template, add shared templates for interactive mode.
 # 3. Once all the templates are completed, create the shell functions inside /.zshrc
