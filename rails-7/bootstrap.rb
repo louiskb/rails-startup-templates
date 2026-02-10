@@ -36,7 +36,12 @@ def source_path(file)
   if __FILE__ =~ %r{https?://}
     "https://raw.githubusercontent.com/louiskb/rails-startup-templates/refs/heads/master/#{file}"
   else
-    "#{__dir__}/#{file}"
+    # "#{__dir__}/#{file}"
+    # `File.expand_path` turns "short paths" (like ../foo.rb) into "full paths" (like /home/user/project/foo.rb). It ignores where your terminal is and uses a safe starting point.
+    # 1st argument: `../#{file}` = go up one folder, then to `file` e.g. `devise.rb`.
+    # 2nd argument: folder of THIS Ruby file (safe base, ignores `cd` changes).
+    # Result: full path to sibling file e.g. from rails-startup-template/rails-7/devise.rb to rails-startup-templates/shared/devise.rb
+    File.expand_path(".../#{file}", __dir__)
   end
 end
 
@@ -230,6 +235,11 @@ end
 
 
 # TODO:
+#
+# - What does `File.expand_path(".../#{file}", __dir__)` line 40 do? What is the `expand_path` method?
+# Then test bootstrap main template with devise shared template.
+# Commit changes with git.
+#
 # 1. Build out all the shared templates first before building the main templates.
 # 2. After finishing the primary code for the specific main template, add shared templates for interactive mode.
 # 3. Once all the templates are completed, create the shell functions inside /.zshrc
