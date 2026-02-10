@@ -186,8 +186,16 @@ after_bundle do
   RUBY
 
   # Environments for Action Mailer
-  environment 'config.action_mailer.default_url_options = { host: "http://localhost:3000 }', env: "development"
-  environment 'config.action_mailer.default_url_options = { host: "https://TODO_PUT_YOUR_DOMAIN_HERE" }', env: "production"
+  mailer_development = <<~RUBY
+    config.action_mailer.default_url_options = { host: "http://localhost:3000" }
+  RUBY
+
+  mailer_production = <<~RUBY
+    config.action_mailer.default_url_options = { host: "http://TODO_PUT_YOUR_DOMAIN_HERE" }
+  RUBY
+
+  environment mailer_development, env: "development"
+  environment mailer_production, env: "production"
 
   # Bootstrap and Popper
   append_file "config/initializers/assets.rb", <<~RUBY
