@@ -78,7 +78,7 @@ if File.exist?("app/views/devise/registrations/edit.html.erb") && File.read("Gem
   say "Updated Devise cancel button to Bootstrap style.", :green
 end
 
-# STANDALONE MIGRATE SUPPORT
+# STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
 # Logic stored inside `in_main_template` variable:
 # `caller_locations` is a Ruby built-in method that returns an array of callstack frames which has reference to "who called this code?".
@@ -86,7 +86,10 @@ end
 # This specific block iterates over caller_locations (array), taking `loc` as a block parameter and returning `true` if any location matches the conditions.
 # The block checks `loc.label` that matches the calling method `after_bundle` or `loc.path`(regex match for "bootstrap.rb" or other main template file names).
 # `any?` short-circuits on the first truthy block result.
-in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ /bootstrap\.rb/ }
+# `Regexp.union` builds one Regexp from multiple patterns by joining them with `|` (regex alternation), so it matches any of the inputs. `|` acts as logical OR—tries left-to-right, takes first match. `Regexp.union` inputs could be strings, Regexps, or an array.
+# `Regexp.union(['bootstrap.rb', 'custom.rb', 'tailwind.rb'])` → /bootstrap\.rb|custom\.rb|tailwind\.rb/
+main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
+in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }
 
 if in_main_template
   say "Main template detected → skipping migrations", :yellow
