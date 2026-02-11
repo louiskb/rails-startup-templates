@@ -157,6 +157,16 @@ if should_install?("navbar", "install NavBar? (y/n)")
   run "curl -L https://raw.githubusercontent.com/lewagon/awesome-navbars/master/templates/_navbar_wagon.html.erb > app/views/shared/_navbar.html.erb"
 end
 
+# ruby_llm
+if should_install?("ruby_llm", "install ruby_llm? (y/n)")
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "ruby_llm"
+
+    RUBY
+  end
+end
+
 # STEP 3: AFTER BUNDLE
 # Single `bundle install` and further setup including optional shared templates
 
@@ -252,6 +262,14 @@ after_bundle do
     apply source_path("shared/navbar.rb")
     git add: "."
     git commit: "-m 'feat: add NavBar."
+  end
+
+  # shared/ruby_llm.rb
+  if File.read("Gemfile").include?("gem \"ruby_llm\"")
+    # Gem was added → run shared/ruby_llm.rb shared template setup.
+    apply source_path("shared/ruby_llm.rb")
+    git add: "."
+    git commit "-m 'feat: install ruby_llm.'"
   end
 
   # Run all migrations towards the end of `after_bundle`.
