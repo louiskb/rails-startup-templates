@@ -138,7 +138,7 @@ Add these to your `~/.zshrc` or `~/.bashrc` for quick app creation:
 
 ```bash
 # Replace YOUR_USERNAME with your GitHub username
-export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates/main"
+export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates"
 
 ##############################################
 # RAILS 8 - Interactive modes (prompts for extras)
@@ -168,7 +168,7 @@ rails8-custom() {
 
 rails8-bootstrap-all() {
   # Bootstrap + all extras
-  DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
   FRIENDLY_URLS=true ADMIN=true \
   rails new "$1" -d postgresql \
@@ -177,7 +177,7 @@ rails8-bootstrap-all() {
 
 rails8-tailwind-all() {
   # Tailwind + all extras
-  DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
   FRIENDLY_URLS=true ADMIN=true \
   rails new "$1" -d postgresql \
@@ -190,7 +190,7 @@ rails8-tailwind-all() {
 
 rails8-bootstrap-min() {
   # Bootstrap only (no extras)
-  DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
   FRIENDLY_URLS=false ADMIN=false \
   rails new "$1" -d postgresql \
@@ -199,7 +199,7 @@ rails8-bootstrap-min() {
 
 rails8-tailwind-min() {
   # Tailwind only (no extras)
-  DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
   FRIENDLY_URLS=false ADMIN=false \
   rails new "$1" -d postgresql \
@@ -240,7 +240,7 @@ rails7-custom() {
 
 rails7-bootstrap-all() {
   # Bootstrap + all extras
-  DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
   FRIENDLY_URLS=true ADMIN=true \
   rails _7.2.2_ new "$1" -d postgresql \
@@ -249,7 +249,7 @@ rails7-bootstrap-all() {
 
 rails7-tailwind-all() {
   # Tailwind + all extras
-  DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true ACTIVE_STORAGE=true IMAGE_PROCESSING=true \
   FRIENDLY_URLS=true ADMIN=true \
   rails _7.2.2_ new "$1" -d postgresql \
@@ -262,7 +262,7 @@ rails7-tailwind-all() {
 
 rails7-bootstrap-min() {
   # Bootstrap only (no extras)
-  DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
   FRIENDLY_URLS=false ADMIN=false \
   rails _7.2.2_ new "$1" -d postgresql \
@@ -271,7 +271,7 @@ rails7-bootstrap-min() {
 
 rails7-tailwind-min() {
   # Tailwind only (no extras)
-  DEVISE=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false ACTIVE_STORAGE=false IMAGE_PROCESSING=false \
   FRIENDLY_URLS=false ADMIN=false \
   rails _7.2.2_ new "$1" -d postgresql \
