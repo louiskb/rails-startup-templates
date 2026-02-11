@@ -8,7 +8,7 @@
 # GUARD 1: Fully installed? (config + model exist).
 # Skip entire template if Devise is already complete.
 if File.exist?("config/initializers/devise.rb") && File.exist?("app/models/user.rb")
-  say "Devise fully installed (config + User exist), skipping.", :yellow
+  say "Devise already installed (config + User exist), skipping.", :yellow
   exit # Early exit
 end
 
