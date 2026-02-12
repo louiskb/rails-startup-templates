@@ -38,5 +38,7 @@ file "config/initializers/ruby_llm.rb", <<~RUBY
 RUBY
 
 append_file ".env", <<~RUBY
-  # OPENAI_API_KEY=replace_with_your_openai_key
+  # OPENAI_API_KEY=replace_with_your_openai_api_key
 RUBY
+
+say "✅ Ruby LLM installation complete!", :green

@@ -22,3 +22,5 @@ if !layouts_application.include?('<%= render "shared/navbar" %>')
     HTML
   end
 end
+
+say "✅ NavBar installation complete!", :green

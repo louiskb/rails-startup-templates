@@ -12,3 +12,7 @@
 # Fresh apps: main template already added gem → this skips.
 
 # STANDALONE MIGRATION SUPPORT
+# Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
+
+
+say "✅ installation complete!", :green

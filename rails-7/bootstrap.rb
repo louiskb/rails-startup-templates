@@ -267,6 +267,7 @@ after_bundle do
     git commit: "-m 'feat: install devise.'"
   end
 
+  # shared/image_upload_cloudinary.rb
   if File.read("Gemfile").include?('gem "cloudinary"')
     apply source_path("shared/image_upload_cloudinary.rb")
     git add: "."

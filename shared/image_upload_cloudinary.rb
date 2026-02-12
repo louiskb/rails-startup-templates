@@ -35,7 +35,49 @@ if !gemfile.match?(/^gem.*['"]cloudinary['"]/)
   run "bundle install" unless system("bundle check")
 end
 
+# Set cloudinary ENV variable
+append_file ".env", <<~RUBY
+  # CLOUDINARY_URL=replace_with_your_cloudinary_api_key
+RUBY
+
+# Install active storage
 rails_command "active_storage:install"
-rails_command "db:migrate"
+# rails_command "db:migrate"
+
+# Config
+append_file "config/storage.yml", <<~YML
+  cloudinary:
+    service: Cloudinary
+    folder: <%= Rails.env %>
+YML
+
+# Config in development environment
+gsub_file(
+  "config/environments/development.rb",
+  "config.active_storage.service = :local",
+  "config.active_storage.service = :cloudinary"
+)
+
+# Config in production environment
+gsub_file(
+  "config/environments/production.rb",
+  "config.active_storage.service = :local",
+  "config.active_storage.service = :cloudinary"
+)
+
+# Post-template setup steps:
+# 
 
 # STANDALONE MIGRATION SUPPORT
+# Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
+main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
+in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }
+
+if in_main_template
+  say "Main template detected → skipping migrations", :yellow
+else
+  say "Standalone mode → executing db:migrate...", :blue
+  rails_command "db:migrate"
+end
+
+say "✅ Image upload with cloudinary installation complete!", :green
