@@ -13,6 +13,7 @@ if File.exist?("config/initializers/devise.rb") && File.exist?("app/models/user.
 end
 
 # STANDALONE SUPPORT: Add gem if missing (existing apps only).
+# Inside conditional, once gem added to `Gemfile`, run `bundle install` if not already executed.
 # Fresh apps: main template already added gem → this skips.
 gemfile = File.read("Gemfile")
 if !gemfile.include?('gem "devise"') && !gemfile.include?("gem 'devise'")

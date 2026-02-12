@@ -12,6 +12,7 @@ if File.exist?("config/initializers/ruby_llm.rb")
 end
 
 # STANDALONE SUPPORT: Add gem if missing (existing apps only).
+# Inside conditional, once gem added to `Gemfile`, run `bundle install` if not already executed.
 # Fresh apps: main template already added gem → this skips.
 gemfile = File.read("Gemfile")
 if !gemfile.include?('gem "ruby_llm"') && !gemfile.include?("gem 'ruby_llm'")

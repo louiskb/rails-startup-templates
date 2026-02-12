@@ -152,6 +152,16 @@ if should_install?("devise", "install Devise? (y/n)")
   end
 end
 
+# image_uploading_cloudinary
+if should_install?("image_uploading_cloudinary", "install image uploading with Cloudinary? (y/n)")
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "cloudinary"
+
+    RUBY
+  end
+end
+
 # navbar
 if should_install?("navbar", "install NavBar? (y/n)")
   run "curl -L https://raw.githubusercontent.com/lewagon/awesome-navbars/master/templates/_navbar_wagon.html.erb > app/views/shared/_navbar.html.erb"
@@ -255,6 +265,12 @@ after_bundle do
     apply source_path("shared/devise.rb")
     git add: "."
     git commit: "-m 'feat: install devise.'"
+  end
+
+  if File.read("Gemfile").include?('gem "cloudinary"')
+    apply source_path("shared/image_upload_cloudinary.rb")
+    git add: "."
+    git commit: "-m 'feat: install active storage and cloudinary.'"
   end
 
   # shared/navbar.rb
