@@ -152,7 +152,7 @@ if should_install?("devise", "install Devise? (y/n)")
   end
 end
 
-# image_uploading_cloudinary
+# image_upload_cloudinary
 if should_install?("image_uploading_cloudinary", "install image uploading with Cloudinary? (y/n)")
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
