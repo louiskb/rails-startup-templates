@@ -72,7 +72,7 @@ gsub_file(
 # 2. `has_many_attached :photos` - each record can have many files attached to it.
 # Form image uploader in `simple_form`: `<%= f.input :photo, as: :file %>` or `<%= f.input :photos, as: :file, input_html: { multiple: true } %>` to attach many photos.
 # Add `:photo` or `photo: []` (many attached photos) to strong params.
-# Display image(s) in the view: `<%= cl_image_tag @your_model.photo.key, height: 100, width: 300, crop: :fill %>`
+# Display image(s) in the view: `<%= cl_image_tag @your_model.photo.key, height: 250, width: 350, crop: :fill %>`
 # Add `CLOUDINARY_URL` env variable to deployment (e.g. Heroku): run `heroku config:set CLOUDINARY_URL=xxxxxxxxxxxxx...`. Confirm it with `heroku config:get CLOUDINARY_URL`.
 
 # STANDALONE MIGRATION SUPPORT
