@@ -152,7 +152,7 @@ if should_install?("devise", "install Devise? (y/n)")
   end
 end
 
-# admin (devise required before installation) admin dashboard for CRUD operations on models
+# admin (devise required before installation) - an admin dashboard for CRUD operations on models.
 if should_install?("admin", "install Active Admin - a dashboard for CRUD operations on models? (y/n)")
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
@@ -280,7 +280,7 @@ after_bundle do
     git commit: "-m 'feat: install devise.'"
   end
 
-  # shared/admin.rb
+  # shared/admin.rb (Devise required before installation)
   if File.read("Gemfile").include?('gem "activeadmin"')
     apply source_path("shared/admin.rb")
     git add: "."

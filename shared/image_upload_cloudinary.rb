@@ -87,4 +87,4 @@ else
   rails_command "db:migrate"
 end
 
-say "✅ Image upload with cloudinary installation complete!", :green
+say "✅ Image upload with Cloudinary installation complete!", :green
