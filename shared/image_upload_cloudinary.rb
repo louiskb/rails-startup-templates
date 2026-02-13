@@ -66,7 +66,14 @@ gsub_file(
 )
 
 # Post-template setup steps:
-# 
+# Replace the `CLOUDINARY_URL` env variable in `.env` with your Cloudinary API key.
+# Define relationships in your model:
+# 1. `has_one_attached :photo` - each record has one file attached to it.
+# 2. `has_many_attached :photos` - each record can have many files attached to it.
+# Form image uploader in `simple_form`: `<%= f.input :photo, as: :file %>` or `<%= f.input :photos, as: :file, input_html: { multiple: true } %>` to attach many photos.
+# Add `:photo` or `photo: []` (many attached photos) to strong params.
+# Display image(s) in the view: `<%= cl_image_tag @your_model.photo.key, height: 100, width: 300, crop: :fill %>`
+# Add `CLOUDINARY_URL` env variable to deployment (e.g. Heroku): run `heroku config:set CLOUDINARY_URL=xxxxxxxxxxxxx...`. Confirm it with `heroku config:get CLOUDINARY_URL`.
 
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
