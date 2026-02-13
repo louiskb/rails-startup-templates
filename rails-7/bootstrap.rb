@@ -284,7 +284,7 @@ after_bundle do
   if File.read("Gemfile").include?('gem "activeadmin"')
     apply source_path("shared/admin.rb")
     git add: "."
-    git commit: "-m 'feat: install active admin.'"
+    git commit: "-m 'feat: install ActiveAdmin.'"
   end
 
   # shared/image_upload_cloudinary.rb
