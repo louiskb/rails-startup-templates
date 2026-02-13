@@ -152,6 +152,14 @@ if should_install?("devise", "install Devise? (y/n)")
   end
 end
 
+# admin (devise required before installation) admin dashboard for CRUD operations on models
+if should_install?("admin", "install Active Admin - a dashboard for CRUD operations on models? (y/n)")
+  <<~RUBY
+    gem "activeadmin"
+
+  RUBY
+end
+
 # image_upload_cloudinary
 if should_install?("image_uploading_cloudinary", "install image uploading with Cloudinary? (y/n)")
   inject_into_file "Gemfile", before: "group :development, :test do" do
@@ -267,6 +275,13 @@ after_bundle do
     git commit: "-m 'feat: install devise.'"
   end
 
+  # shared/admin.rb
+  if File.read("Gemfile").include?('gem "activeadmin"')
+    apply source_path("shared/admin.rb")
+    git add: "."
+    git commit: "-m 'feat: install active admin.'"
+  end
+
   # shared/image_upload_cloudinary.rb
   if File.read("Gemfile").include?('gem "cloudinary"')
     apply source_path("shared/image_upload_cloudinary.rb")
@@ -278,7 +293,7 @@ after_bundle do
   if File.exist?("app/views/shared/_navbar.html.erb")
     apply source_path("shared/navbar.rb")
     git add: "."
-    git commit: "-m 'feat: add NavBar."
+    git commit: "-m 'feat: add NavBar.'"
   end
 
   # shared/ruby_llm.rb
