@@ -5,7 +5,7 @@
 # 1. Fresh app: called from main template INSIDE `after_bundle` (gems already added/bundles by main template).
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/ruby_llm.rb`).
 
-# GUARD 1: Skip if Ruby LLM is already installed.
+# GUARD 1: Skip entire template if Ruby LLM is already installed.
 if File.exist?("config/initializers/ruby_llm.rb")
   say "ruby_llm already installed, skipping.", :yellow
   exit
