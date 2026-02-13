@@ -154,14 +154,18 @@ end
 
 # admin (devise required before installation) admin dashboard for CRUD operations on models
 if should_install?("admin", "install Active Admin - a dashboard for CRUD operations on models? (y/n)")
-  <<~RUBY
-    gem "activeadmin"
 
-  RUBY
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "activeadmin"
+
+    RUBY
+  end
 end
 
 # image_upload_cloudinary
 if should_install?("image_uploading_cloudinary", "install image uploading with Cloudinary? (y/n)")
+
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "cloudinary"
@@ -177,6 +181,7 @@ end
 
 # ruby_llm
 if should_install?("ruby_llm", "install ruby_llm? (y/n)")
+
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "ruby_llm"
