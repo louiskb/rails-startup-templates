@@ -140,6 +140,33 @@ environment generators
 # User says YES → add gem to Gemfile
 # User says NO → skip (don't add gem)
 
+# dev_tools
+if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate', 'Rubocop')? (y/n)")
+
+  # `gem "pry_byebug"` = Pry + debugger
+  # `gem "pry-rails"` = Pry as default console
+  inject_into_file "Gemfile", after: "group :development do\n" do
+    <<~RUBY
+      gem "annotate"
+      gem "better_errors"
+      gem "binding_of_caller"
+      gem "pry-byebug"
+      gem "pry-rails", require: false
+      gem "awesome_print", require: false
+    RUBY
+  end
+
+  # `require: false` = instructs Bundler to install the gem but prevents it from being automatically loaded when `Bundler.require` is called (which happens in Rails apps during boot).
+  # For example, `rubocop-rails` is a code analysis tool run via CLI commands like `bundle exec rubocop`, not something loaded into your Rails app's runtime (controllers, models, etc.).
+  # `require: false` only skips auto-loading during app boot (via `Bundler.require`), which is ideal for dev tools to avoid bloat.
+  inject_into_file "Gemfile", after: "group :development, :test do\n" do
+    <<~RUBY
+      gem "rubocop", require: false
+      gem "rubocop-rails", require: false
+    RUBY
+  end
+end
+
 # devise
 if should_install?("devise", "install Devise? (y/n)")
   # Add devise gem to Gemfile (before `bundle install`)
@@ -272,6 +299,13 @@ after_bundle do
   # TODO: Add more conditional gem checks for each new shared template:
   # File.read() checks if gem was added in Step 2.
 
+  # shared/dev_tools.rb
+  if File.read("Gemfile").include?('gem "better_errors"') || File.read("Gemfile").include?('gem "annotate"')
+    apply source_path("shared/dev_tools.rb")
+    git add: "."
+    git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
+  end
+
   # shared/devise.rb
   if File.read("Gemfile").include?("gem \"devise\"")
     # Gem was added → run shared/devise.rb shared template setup.
@@ -284,7 +318,7 @@ after_bundle do
   if File.read("Gemfile").include?('gem "activeadmin"')
     apply source_path("shared/admin.rb")
     git add: "."
-    git commit: "-m 'feat: install ActiveAdmin.'"
+    git commit: "-m 'feat: install active admin.'"
   end
 
   # shared/image_upload_cloudinary.rb
@@ -298,7 +332,7 @@ after_bundle do
   if File.exist?("app/views/shared/_navbar.html.erb")
     apply source_path("shared/navbar.rb")
     git add: "."
-    git commit: "-m 'feat: add NavBar.'"
+    git commit: "-m 'feat: add navbar.'"
   end
 
   # shared/ruby_llm.rb
