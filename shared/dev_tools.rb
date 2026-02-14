@@ -66,10 +66,12 @@ end
 unless gemfile.match?(/^gem.*['"]pry-rails['"]/)
   say 'Adding "pry-byebug" and "pry-rails" gems to Gemfile (development group)...', :blue
 
-  inject_into_file "Gemfile", after: "group :development do\n", <<~RUBY
-    gem "pry-byebug"
-    gem "pry-rails", require: false
-  RUBY
+  inject_into_file "Gemfile", after: "group :development do\n" do
+    <<~RUBY
+      gem "pry-byebug"
+      gem "pry-rails", require: false
+    RUBY
+  end
 
   missing_gems << "pry"
 end
@@ -77,9 +79,11 @@ end
 unless gemfile.match?(/^gem.*['"]awesome_print['"]/)
   say 'Adding "awesome_print" gems to Gemfile (development group)...', :blue
 
-  inject_into_file "Gemfile", after: "group :development do\n", <<~RUBY
-    gem "awesome_print", require: false
-  RUBY
+  inject_into_file "Gemfile", after: "group :development do\n" do
+    <<~RUBY
+      gem "awesome_print", require: false
+    RUBY
+  end
 
   missing_gems << "awesome_print"
 end
