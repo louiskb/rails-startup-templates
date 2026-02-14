@@ -114,8 +114,8 @@ HTML
 
 inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
   <<~HTML
-    <%= render "shared/flashes" %>
-  HTML
+      <%= render "shared/flashes" %>
+    HTML
 end
 
 # README
