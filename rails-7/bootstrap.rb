@@ -363,6 +363,7 @@ after_bundle do
     git commit: "-m 'feat: add navbar.'"
   end
 
+  # shared/pagination.rb
   if gemfile.include?('gem "pagy"')
     apply source_path("shared/pagination.rb")
     git add: "."
