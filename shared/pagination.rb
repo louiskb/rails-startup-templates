@@ -33,12 +33,22 @@ end
 # Install generator
 unless File.exist?("config/initializers/pagy.rb")
   say "Running `rails generate pagy:install`...", :blue
+
+  # Tests if `rails generate pagy:install` command exists/works before running it. If so, run it and if not, skip it and tell the user why.
+  # `bundle install` installs pagy gem + generators. Thus, making the Pagy generator available to run. Having a guard clause to test if the command exists means it's safe to run and that `bundle install` was a success.
+  #
+  # `bundle exec` → correct gem version.
+  # `rails generate pagy:install --help` → Test Pagy's generator (prints usage, no side effects).
+  # `> /dev/null 2>&1` = silent output (no terminal "spam").
+  # `system()` returns boolean if command was successful (true) or failed (false). In this case if `true`, generator exists → run it. If `false`, gem is missing → skip gracefully.
   if system("bundle exec rails generate pagy:install --help > /dev/null 2>&1")
     run "bundle exec rails generate pagy:install"
   else
     say "Pagy generator unavailable. Run `bundle install` first.", :yellow
   end
+
 else
+
   say "Pagy initializer exists, skipping.", :yellow
 end
 
