@@ -48,7 +48,6 @@ unless File.exist?("config/initializers/pagy.rb")
   end
 
 else
-
   say "Pagy initializer exists, skipping.", :yellow
 end
 

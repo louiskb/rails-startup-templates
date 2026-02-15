@@ -76,6 +76,7 @@ if File.exist?("app/models/user.rb") && !File.read("app/models/user.rb").include
     generate "migration", "AddSlugToUsers slug:string:index:uniq"
     # rails_command "db:migrate"
   end
+  
 else
   say "User model exists or already has FriendlyId, skipping.", :yellow
 end
