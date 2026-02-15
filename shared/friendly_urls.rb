@@ -1,7 +1,7 @@
 # shared/friendly_urls.rb
 # Shared Friendly URLs Template (SEO friendly URLs)
 # Converts /posts/123 → /posts/how-to-build-rails-apps
-# Supports both slugs AND IDs: Post.find("slug") or Post.find(123)
+# Supports both slugs AND IDs: Post.find("slug") or Post.find(123).
 
 # TWO USE CASES:
 # 1. Fresh app: called from main template INSIDE `after_bundle` (gems already added/bundles by main template).
@@ -31,8 +31,14 @@ unless gemfile.match?(/^gem.*['"]friendly_id['"]/)
 end
 
 # Add slug column migration (only if Devise is already installed)
+#
+# To use a model attribute like `:title` as the URL slug for eg. Post model or any other model:
+  # 1. Create a migration `generate "migration", "AddSlugToPosts slug:string:index:uniq"` (i.e. run in the terminal `rails generate migration AddSlugToPosts slug:string:index:uniq`)
+  # 2. add `extend FriendlyId\n` `friendly_id :title, use: :slugged` to the Post model.
+  # This will use `title` as a slug for the id, which reflects in the URL eg. URL `/posts/1` → `/posts/my-post-title` (SEO friendly + cleaner URLs). Also applies to wherever ids are used eg. `Post.find(123)` or `Post.find("slug")`.
+  # Apply the same process to any other model.
+#
 # Check if User model exists before continuing.
-
 if File.exist?("app/models/user.rb") && !File.read("app/models/user.rb").include?("extend FriendlyId")
   say "Adding FriendlyId to User model (uses :slug column)...", :blue
 
@@ -44,6 +50,28 @@ if File.exist?("app/models/user.rb") && !File.read("app/models/user.rb").include
   end
 
   # Add slug column migration (if Devise is present)
+  # Check if slug migration for `User` already exists before generating a new one.
+  # Dir["db/migrate/*_add_slug_to_users.rb"] returns array of matching migration files (glob pattern).
+  #
+  # SHORT CODE EXPLANATION
+  # `Dir.[]` == `Dir.glob()`: `*` = wildcard, matches any filename ending `_add_slug_to_users.rb`.
+  # `Dir` = directory helper class.
+  # `Dir["pattern"]` = give me all files matching this pattern as an array.
+  # `.any?` = is that array non-empty? (true / false)
+  #
+  # LONG CODE EXPLANATION
+  # `Dir[...]` is Ruby's glob shortcut: it returns an array of paths match a pattern.
+  # `Dir`is the Ruby class for dealing with directories (listing files, etc.). The `[...]` here is not an array literal; it’s calling Dir.[] (a class method), which is equivalent to `Dir.glob`.
+  # `Dir[...]` calls the [] method on `Dir`, which is defined to behave like `Dir.glob("pattern")`.
+  # There is a `Dir.glob("pattern")`, but `Dir["pattern"]` is just a shorter, idiomatic form.
+  # `Dir.glob("db/migrate/*.rb")` = (same as) `Dir["db/migrate/*.rb"]` (glob, returns array of filenames).
+  # `Dir[]` accepts a glob pattern as it's argument inside `[...]`. `Dir["db/migrate/*_add_slug_to_users.rb"]` returns an array like `["db/migrate/20260215010101_add_slug_to_users.rb"]` or [] it none exist.
+  # The glob pattern `"db/migrate/*_add_slug_to_users.rb"` searches in the directory `db/migrate`. `*` wildcard accepts any characters.
+  # `_add_to_slug_users.rb` is the exact suffix so it matches any file in `db/migrate` whose filename ends with `add_to_slug_users.rb` eg. `20260215010101_add_slug_to_users.rb`.
+  # If one or more exist, the results is an array of those paths. If no such file exists, the result is [] (empty array).
+  #
+  # `.any?` → true if ≥1 file exists inside [] (migration exists), false if [] (empty).
+  # `unless` → generate migration only if NO matching migration file found (idempotent = safe to re-run multiple times).
   unless Dir["db/migrate/*_add_slug_to_users.rb"].any?
     generate "migration", "AddSlugToUsers slug:string:index:uniq"
     # rails_command "db:migrate"
