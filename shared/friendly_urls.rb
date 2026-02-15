@@ -1,9 +1,13 @@
 # shared/friendly_urls.rb
-# Shared Friendly URLs Template
+# Shared Friendly URLs Template (SEO friendly URLs)
+# Converts /posts/123 → /posts/how-to-build-rails-apps
+# Supports both slugs AND IDs: Post.find("slug") or Post.find(123)
 
 # TWO USE CASES:
 # 1. Fresh app: called from main template INSIDE `after_bundle` (gems already added/bundles by main template).
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/friendly_urls.rb`).
+
+gemfile = File.read("Gemfile")
 
 # GUARD 1: Skip entire template if Friendly URLs is already installed.
 

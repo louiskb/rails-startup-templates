@@ -190,6 +190,9 @@ if should_install?("admin", "install Active Admin - a dashboard for CRUD operati
   end
 end
 
+# friendly_urls
+
+
 # image_upload_cloudinary
 if should_install?("image_uploading_cloudinary", "install image uploading with Cloudinary? (y/n)")
 
@@ -298,16 +301,17 @@ after_bundle do
   # APPLY shared templates ONLY if we added their gems during interactive setup.
   # TODO: Add more conditional gem checks for each new shared template:
   # File.read() checks if gem was added in Step 2.
+  gemfile = File.read("Gemfile")
 
   # shared/dev_tools.rb
-  if File.read("Gemfile").include?('gem "better_errors"') || File.read("Gemfile").include?('gem "annotate"')
+  if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
     apply source_path("shared/dev_tools.rb")
     git add: "."
     git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
   end
 
   # shared/devise.rb
-  if File.read("Gemfile").include?("gem \"devise\"")
+  if gemfile.include?("gem \"devise\"")
     # Gem was added → run shared/devise.rb shared template setup.
     apply source_path("shared/devise.rb")
     git add: "."
@@ -315,14 +319,14 @@ after_bundle do
   end
 
   # shared/admin.rb (Devise required before installation)
-  if File.read("Gemfile").include?('gem "activeadmin"')
+  if gemfile.include?('gem "activeadmin"')
     apply source_path("shared/admin.rb")
     git add: "."
     git commit: "-m 'feat: install active admin.'"
   end
 
   # shared/image_upload_cloudinary.rb
-  if File.read("Gemfile").include?('gem "cloudinary"')
+  if gemfile.include?('gem "cloudinary"')
     apply source_path("shared/image_upload_cloudinary.rb")
     git add: "."
     git commit: "-m 'feat: install active storage and cloudinary.'"
@@ -336,7 +340,7 @@ after_bundle do
   end
 
   # shared/ruby_llm.rb
-  if File.read("Gemfile").include?("gem \"ruby_llm\"")
+  if gemfile.include?("gem \"ruby_llm\"")
     # Gem was added → run shared/ruby_llm.rb shared template setup.
     apply source_path("shared/ruby_llm.rb")
     git add: "."
