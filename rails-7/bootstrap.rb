@@ -191,7 +191,14 @@ if should_install?("admin", "install Active Admin - a dashboard for CRUD operati
 end
 
 # friendly_urls
+if should_install?("friendly_urls", "Install Friendly URLs (FriendlyId)? (y/n)")
+  inject_into_file "Gemfile", before: "group :development, :test do\n" do
+    <<~RUBY
+      gem "friendly_id"
 
+    RUBY
+  end
+end
 
 # image_upload_cloudinary
 if should_install?("image_uploading_cloudinary", "install image uploading with Cloudinary? (y/n)")
@@ -323,6 +330,13 @@ after_bundle do
     apply source_path("shared/admin.rb")
     git add: "."
     git commit: "-m 'feat: install active admin.'"
+  end
+
+  # shared/friendly_urls.rb
+  if gemfile.include?('gem "friendly_id"')
+    apply source_path("shared/friendly_urls.rb")
+    git add: "."
+    git commit: "-m 'feat: install friendly id.'"
   end
 
   # shared/image_upload_cloudinary.rb
