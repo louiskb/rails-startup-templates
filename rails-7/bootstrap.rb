@@ -216,6 +216,16 @@ if should_install?("navbar", "install NavBar? (y/n)")
   run "curl -L https://raw.githubusercontent.com/lewagon/awesome-navbars/master/templates/_navbar_wagon.html.erb > app/views/shared/_navbar.html.erb"
 end
 
+# pagination
+if should_install?("pagination", "Install Pagy pagination? (y/n)")
+  inject_into_file "Gemfile", before: "group :development, :test do\n" do
+    <<~RUBY
+      gem "pagy"
+
+    RUBY
+  end
+end
+
 # ruby_llm
 if should_install?("ruby_llm", "install ruby_llm? (y/n)")
 
@@ -353,6 +363,12 @@ after_bundle do
     git commit: "-m 'feat: add navbar.'"
   end
 
+  if gemfile.include?('gem "pagy"')
+    apply source_path("shared/pagination.rb")
+    git add: "."
+    git commit: "-m 'feat: install pagy pagination."
+  end
+
   # shared/ruby_llm.rb
   if gemfile.include?("gem \"ruby_llm\"")
     # Gem was added → run shared/ruby_llm.rb shared template setup.
@@ -371,9 +387,6 @@ end
 
 
 # TODO:
-#
-# Fix devise `db:migrate` conditional. Devised shared template does not detect if being called from standalone or main template.
-#
 # 1. Build out all the shared templates first before building the main templates.
 # 2. After finishing the primary code for the specific main template, add shared templates for interactive mode.
 # 3. Once all the templates are completed, create the shell functions inside /.zshrc
