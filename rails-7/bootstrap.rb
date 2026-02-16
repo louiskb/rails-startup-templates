@@ -399,12 +399,14 @@ after_bundle do
     git commit "-m 'feat: install ruby_llm.'"
   end
 
+  # shared/security.rb
   if gemfile.include?('gem "secure_headers"')
     apply source_path("shared/security.rb")
     git add: "."
     git commit: "-m 'feat: install security.'"
   end
 
+  # shared/testing.rb
   # if gemfile.include?('gem "_"')
 
   # Run all migrations towards the end of `after_bundle`.

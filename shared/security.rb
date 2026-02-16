@@ -38,7 +38,7 @@ unless gemfile.match?(/^gem.*['"]rack-attack['"]/)
   inject_into_file "Gemfile", before: "group :development do\n" do
     <<~RUBY
       gem "rack-attack"
-
+      
     RUBY
   end
 
@@ -80,7 +80,7 @@ end
 # `secure_headers` docs = https://github.com/github/secure_headers
 
 # `rack-attack` (rate limiting)
-# Rate limiting: 5 login attempts/minute/IP, 100 API calls/minute/IP, blocks bad bots. 
+# Rate limiting: 5 login attempts/minute/IP, 100 API calls/minute/IP, blocks bad bots.
 unless File.exist?("config/initializers/rack_attack.rb")
   say "Creating rack-attack rate limiting...", :blue
 

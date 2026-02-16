@@ -29,6 +29,7 @@ if !gemfile.match?(/^gem.*['"]cloudinary['"]/)
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "cloudinary"
+      
     RUBY
   end
 

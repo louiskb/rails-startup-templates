@@ -23,7 +23,7 @@ if !gemfile.include?('gem "devise"') && !gemfile.include?("gem 'devise'")
     # Note the blank line inside the heredoc to keep Gemfile formatting clean.
     <<~RUBY
       gem "devise"
-
+      
     RUBY
   end
 

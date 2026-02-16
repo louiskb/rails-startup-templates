@@ -27,6 +27,7 @@ unless gemfile.match?(/^gem.*['"]better_errors['"]/)
     <<~RUBY
       gem "better_errors"
       gem "binding_of_caller"
+
     RUBY
   end
 
@@ -39,6 +40,7 @@ unless gemfile.match?(/^gem.*['"]annotate['"]/)
   inject_into_file "Gemfile", after: "group :development do\n" do
     <<~RUBY
       gem "annotate"
+
     RUBY
   end
 
@@ -56,6 +58,7 @@ unless gemfile.match?(/^gem.*['"]rubocop['"]/)
     <<~RUBY
       gem "rubocop", require: false
       gem "rubocop-rails", require: false
+      
     RUBY
   end
 

@@ -21,7 +21,7 @@ if !gemfile.include?('gem "ruby_llm"') && !gemfile.include?("gem 'ruby_llm'")
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "ruby_llm"
-
+      
     RUBY
   end
 

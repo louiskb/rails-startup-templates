@@ -43,6 +43,7 @@ if !gemfile.match?(/^gem.*['"]activeadmin['"]/)
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "activeadmin"
+      
     RUBY
   end
 

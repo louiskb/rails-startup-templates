@@ -23,7 +23,7 @@ unless gemfile.include?(/^gem.*['"]pagy['"]/)
   inject_into_file "Gemfile", before: "group :development, :test do\n" do
     <<~RUBY
       gem "pagy"
-
+      
     RUBY
   end
 
