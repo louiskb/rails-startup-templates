@@ -103,8 +103,20 @@ end
 
 
 
+# Example Spec
+
+
+
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
+main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
+in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }
 
+if in_main_template
+  say "Main template detected → skipping migrations", :yellow
+else
+  say "Standalone mode → executing db:migrate...", :blue
+  rails_command "db:migrate"
+end
 
 say "✅ Testing installation complete!", :green
