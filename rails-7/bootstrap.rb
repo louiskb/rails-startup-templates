@@ -168,7 +168,7 @@ if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate',
 end
 
 # devise
-if should_install?("devise", "install Devise? (y/n)")
+if should_install?("devise", "Install Devise? (y/n)")
   # Add devise gem to Gemfile (before `bundle install`)
   # Note the blank line inside the heredoc to keep Gemfile formatting clean.
   inject_into_file "Gemfile", before: "group :development, :test do" do
@@ -180,7 +180,7 @@ if should_install?("devise", "install Devise? (y/n)")
 end
 
 # admin (devise required before installation) - an admin dashboard for CRUD operations on models.
-if should_install?("admin", "install Active Admin - a dashboard for CRUD operations on models? (y/n)")
+if should_install?("admin", "Install Active Admin - a dashboard for CRUD operations on models? (y/n)")
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
@@ -201,7 +201,7 @@ if should_install?("friendly_urls", "Install Friendly URLs (FriendlyId)? (y/n)")
 end
 
 # image_upload_cloudinary
-if should_install?("image_uploading_cloudinary", "install image uploading with Cloudinary? (y/n)")
+if should_install?("image_uploading_cloudinary", "Install image uploading with Cloudinary? (y/n)")
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
@@ -212,7 +212,7 @@ if should_install?("image_uploading_cloudinary", "install image uploading with C
 end
 
 # navbar
-if should_install?("navbar", "install NavBar? (y/n)")
+if should_install?("navbar", "Install NavBar? (y/n)")
   run "curl -L https://raw.githubusercontent.com/lewagon/awesome-navbars/master/templates/_navbar_wagon.html.erb > app/views/shared/_navbar.html.erb"
 end
 
@@ -227,7 +227,7 @@ if should_install?("pagination", "Install Pagy pagination? (y/n)")
 end
 
 # ruby_llm
-if should_install?("ruby_llm", "install ruby_llm? (y/n)")
+if should_install?("ruby_llm", "Install ruby_llm? (y/n)")
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
@@ -236,6 +236,27 @@ if should_install?("ruby_llm", "install ruby_llm? (y/n)")
     RUBY
   end
 end
+
+# security
+if should_install?("serurity", "Install security? (y/n)")
+  inject_into_file "Gemfile", before: "group :development do\n" do
+    <<~RUBY
+      gem "secure_headers"
+      gem "rack-attack"
+
+    RUBY
+  end
+end
+
+# testing
+# if should_install?("testing", "Install testing? (y/n)")
+#   inject_into_file "Gemfile", before: "group :development do\n" do
+#     <<~RUBY
+#       gem
+
+#     RUBY
+#   end
+# end
 
 # STEP 3: AFTER BUNDLE
 # Single `bundle install` and further setup including optional shared templates
@@ -377,6 +398,14 @@ after_bundle do
     git add: "."
     git commit "-m 'feat: install ruby_llm.'"
   end
+
+  if gemfile.include?('gem "secure_headers"')
+    apply source_path("shared/security.rb")
+    git add: "."
+    git commit: "-m 'feat: install security.'"
+  end
+
+  # if gemfile.include?('gem "_"')
 
   # Run all migrations towards the end of `after_bundle`.
   rails_command "db:migrate"
