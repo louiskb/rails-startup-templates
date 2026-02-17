@@ -447,5 +447,5 @@ end
 
 # TODO:
 # 1. Build out all the shared templates first before building the main templates.
-# 2. After finishing the primary code for the specific main template, add shared templates for interactive mode.
+# 2. Build main templates with shared template integration.
 # 3. Once all the templates are completed, create the shell functions inside /.zshrc
