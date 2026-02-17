@@ -249,14 +249,17 @@ if should_install?("serurity", "Install security? (y/n)")
 end
 
 # testing
-# if should_install?("testing", "Install testing? (y/n)")
-#   inject_into_file "Gemfile", before: "group :development do\n" do
-#     <<~RUBY
-#       gem
+if should_install?("testing", "Install testing? (y/n)")
+  inject_into_file "Gemfile", after: "group :development, :test do\n" do
+    <<~RUBY
+      gem "rspec-rails"
+      gem "factory_bot_rails"
+      gem "faker"
+      gem "shoulda-matchers"
 
-#     RUBY
-#   end
-# end
+    RUBY
+  end
+end
 
 # STEP 3: AFTER BUNDLE
 # Single `bundle install` and further setup including optional shared templates
@@ -344,6 +347,8 @@ after_bundle do
   # shared/dev_tools.rb
   if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
     apply source_path("shared/dev_tools.rb")
+
+    # Git
     git add: "."
     git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
   end
@@ -352,6 +357,8 @@ after_bundle do
   if gemfile.include?("gem \"devise\"")
     # Gem was added → run shared/devise.rb shared template setup.
     apply source_path("shared/devise.rb")
+
+    # Git
     git add: "."
     git commit: "-m 'feat: install devise.'"
   end
@@ -359,6 +366,8 @@ after_bundle do
   # shared/admin.rb (Devise required before installation)
   if gemfile.include?('gem "activeadmin"')
     apply source_path("shared/admin.rb")
+
+    # Git
     git add: "."
     git commit: "-m 'feat: install active admin.'"
   end
@@ -366,6 +375,8 @@ after_bundle do
   # shared/friendly_urls.rb
   if gemfile.include?('gem "friendly_id"')
     apply source_path("shared/friendly_urls.rb")
+
+    # Git
     git add: "."
     git commit: "-m 'feat: install friendly id.'"
   end
@@ -373,6 +384,8 @@ after_bundle do
   # shared/image_upload_cloudinary.rb
   if gemfile.include?('gem "cloudinary"')
     apply source_path("shared/image_upload_cloudinary.rb")
+
+    # Git
     git add: "."
     git commit: "-m 'feat: install active storage and cloudinary.'"
   end
@@ -380,6 +393,8 @@ after_bundle do
   # shared/navbar.rb
   if File.exist?("app/views/shared/_navbar.html.erb")
     apply source_path("shared/navbar.rb")
+
+    # Git
     git add: "."
     git commit: "-m 'feat: add navbar.'"
   end
@@ -387,6 +402,8 @@ after_bundle do
   # shared/pagination.rb
   if gemfile.include?('gem "pagy"')
     apply source_path("shared/pagination.rb")
+
+    # Git
     git add: "."
     git commit: "-m 'feat: install pagy pagination."
   end
@@ -395,6 +412,8 @@ after_bundle do
   if gemfile.include?("gem \"ruby_llm\"")
     # Gem was added → run shared/ruby_llm.rb shared template setup.
     apply source_path("shared/ruby_llm.rb")
+
+    # Git
     git add: "."
     git commit "-m 'feat: install ruby_llm.'"
   end
@@ -402,12 +421,20 @@ after_bundle do
   # shared/security.rb
   if gemfile.include?('gem "secure_headers"')
     apply source_path("shared/security.rb")
+
+    # Git
     git add: "."
     git commit: "-m 'feat: install security.'"
   end
 
   # shared/testing.rb
-  # if gemfile.include?('gem "_"')
+  if gemfile.include?('gem "rspec-rails"')
+    apply source_path("shared/testing.rb")
+
+    # Git
+    git add: "."
+    git commit: "-m 'feat: install testing.'"
+  end
 
   # Run all migrations towards the end of `after_bundle`.
   rails_command "db:migrate"
