@@ -1,5 +1,7 @@
 Shell Functions (zsh) for Reference
 
+# Rails 8 vs 7 template differences = (1) choice between native `authentication` setup vs `devise` in Rails 8 templates.
+
 # Replace YOUR_USERNAME with your GitHub username
 export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates"
 

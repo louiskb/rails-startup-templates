@@ -114,6 +114,7 @@ rails new my_app -d postgresql -m TEMPLATE_URL my_app
 | **Ruby LLM** | `ADMIN=true/false` | RubyLLM for AI models Integration |
 | **Bootstrap** | `DEVISE=true/false` | Bootstrap integration | Only use with `custom.rb` main template |
 | **Tailwind** | `DEVISE=true/false` | Tailwind CSS integration | Only use with `custom.rb` main template |
+| **Authentication** | `DEVISE=true/false` | Rails 8 native authentication | Only use with Rails 8 main templates |
 
 **If ENV variable is not set**, the template will prompt you interactively (yes/no).
 
@@ -139,6 +140,8 @@ rails8-min()            # No CSS, no extras
 Add these to your `~/.zshrc` or `~/.bashrc` for quick app creation:
 
 ```bash
+# Rails 8 vs 7 template differences = (1) choice between native `authentication` setup vs `devise` in Rails 8 templates.
+
 # Replace YOUR_USERNAME with your GitHub username
 export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates"
 

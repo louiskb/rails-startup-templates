@@ -449,9 +449,3 @@ after_bundle do
   git add: "."
   git commit: "-m 'feat: add migration after initial setup.'"
 end
-
-
-# TODO:
-# 1. Build out all the shared templates first before building the main templates.
-# 2. Build main templates with shared template integration.
-# 3. Once all the templates are completed, create the shell functions inside /.zshrc
