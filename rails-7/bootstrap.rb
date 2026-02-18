@@ -153,6 +153,7 @@ if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate',
       gem "pry-byebug"
       gem "pry-rails", require: false
       gem "awesome_print", require: false
+
     RUBY
   end
 
@@ -163,6 +164,7 @@ if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate',
     <<~RUBY
       gem "rubocop", require: false
       gem "rubocop-rails", require: false
+
     RUBY
   end
 end
@@ -339,7 +341,7 @@ after_bundle do
   git add: "."
   git commit: "-m 'initial commit: new rails app setup with Bootstrap template.'"
 
-  # APPLY shared templates ONLY if we added their gems during interactive setup.
+  # APPLY shared templates ONLY if their gems were added during interactive setup.
   # TODO: Add more conditional gem checks for each new shared template:
   # File.read() checks if gem was added in Step 2.
   gemfile = File.read("Gemfile")
