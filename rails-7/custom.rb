@@ -1,5 +1,10 @@
 # rails-7/custom.rb
-# Rails 7 Custom CSS Template (Vanilla CSS + optional Bootstrap or Tailwind)
+# Rails 7 Custom Template
+
+# LOGIC FLOW:
+# 1. Core setup (non-interactive).
+# 2. Interactive: Ask about CSS choice (vanilla CSS + optional Bootstrap or Tailwind) and OPTIONAL gems (devise, etc.).
+# 3. `after_bundle`: bundle install ONCE, run generators, and further setup.
 
 # Kill Spring if running (macOS)
 run "if uname | grep -q 'Darwin'; then pgrep spring | xargs kill -9; fi"
