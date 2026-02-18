@@ -57,6 +57,7 @@ inject_into_file "Gemfile", before: "group :development, :test do" do
       gem "font-awesome-sass", "~> 6.1"
       gem "simple_form", github: "heartcombo/simple_form"
       gem "sassc-rails"
+
     RUBY
 end
 
@@ -269,8 +270,22 @@ end
 after_bundle do
   # Generators: db + simple form + pages controller
   rails_command "db:drop db:create db:migrate"
+
   generate("simple_form:install", "--bootstrap")
+
+  # Generate Pages Controller
   generate(:controller, "pages", "home", "--skip-routes", "--no-test-framework")
+
+  # Pages Controller
+  run "rm app/controllers/pages_controller.rb"
+  file "app/controllers/pages_controller.rb", <<~RUBY
+    class PagesController < ApplicationController
+      skip_before_action :authenticate_user!, only: [ :home ]
+
+      def home
+      end
+    end
+  RUBY
 
   # Routes
   route 'root to: "pages#home"'
@@ -284,17 +299,6 @@ after_bundle do
     *.swp
     .DS_Store
   TXT
-
-  # Pages Controller
-  run "rm app/controllers/pages_controller.rb"
-  file "app/controllers/pages_controller.rb", <<~RUBY
-    class PagesController < ApplicationController
-      skip_before_action :authenticate_user!, only: [ :home ]
-
-      def home
-      end
-    end
-  RUBY
 
   # Environments for Action Mailer
   mailer_development = <<~RUBY
@@ -407,7 +411,7 @@ after_bundle do
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install pagy pagination."
+    git commit: "-m 'feat: install pagy pagination.'"
   end
 
   # shared/ruby_llm.rb
@@ -417,7 +421,7 @@ after_bundle do
 
     # Git
     git add: "."
-    git commit "-m 'feat: install ruby_llm.'"
+    git commit: "-m 'feat: install ruby_llm.'"
   end
 
   # shared/security.rb

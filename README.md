@@ -100,8 +100,8 @@ rails new my_app -d postgresql -m TEMPLATE_URL my_app
 
 ### Available Optional Features
 
-| Feature | ENV Variable | Includes |
-|---------|-------------|----------|
+| Feature | ENV Variable | Includes | Notes |
+|---------|-------------|----------|----------|
 | **Devise** | `DEVISE=true/false` | User authentication, login/signup pages, customized views |
 | **Navbar** | `NAVBAR=true/false` | Pre-built navigation bar (Le Wagon style or custom) |
 | **Testing** | `TESTING=true/false` | RSpec, FactoryBot, Faker, Shoulda Matchers |
@@ -112,6 +112,8 @@ rails new my_app -d postgresql -m TEMPLATE_URL my_app
 | **Friendly URLs** | `FRIENDLY_URLS=true/false` | FriendlyId gem for slug-based ID/URLs |
 | **Admin** | `ADMIN=true/false` | ActiveAdmin auto CRUD dashboard with authentication |
 | **Ruby LLM** | `ADMIN=true/false` | RubyLLM for AI models Integration |
+| **Bootstrap** | `DEVISE=true/false` | Bootstrap integration | Only use with `custom.rb` main template |
+| **Tailwind** | `DEVISE=true/false` | Tailwind CSS integration | Only use with `custom.rb` main template |
 
 **If ENV variable is not set**, the template will prompt you interactively (yes/no).
 

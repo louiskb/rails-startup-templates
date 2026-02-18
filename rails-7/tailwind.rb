@@ -37,6 +37,7 @@ inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
     gem "tailwindcss-rails"
     gem "simple_form", github: "heartcombo/simple_form"
+
   RUBY
 end
 
@@ -241,7 +242,19 @@ after_bundle do
     end
   RUBY
 
+  # Generate Pages Controller
   generate(:controller, "pages", "home", "--skip-routes", "--no-test-framework")
+
+  # Pages Controller
+  run "rm app/controllers/pages_controller.rb"
+  file "app/controllers/pages_controller.rb", <<~RUBY
+    class PagesController < ApplicationController
+      skip_before_action :authenticate_user!, only: [ :home ]
+
+      def home
+      end
+    end
+  RUBY
 
   # Routes
   route 'root to: "pages#home"'
@@ -255,17 +268,6 @@ after_bundle do
     *.swp
     .DS_Store
   TXT
-
-  # Pages Controller
-  run "rm app/controllers/pages_controller.rb"
-  file "app/controllers/pages_controller.rb", <<~RUBY
-    class PagesController < ApplicationController
-      skip_before_action :authenticate_user!, only: [ :home ]
-
-      def home
-      end
-    end
-  RUBY
 
   # Environments for Action Mailer
   mailer_development = <<~RUBY
@@ -294,6 +296,8 @@ after_bundle do
   git commit: "-m 'initial commit: new rails app setup with Tailwind template.'"
 
   # APPLY shared templates ONLY if their gems were added during interactive setup.
+  # TODO: Add more conditional gem checks for each new shared template:
+  # File.read() checks if gem was added in Step 2.
   gemfile = File.read("Gemfile")
 
   # shared/dev_tools.rb
@@ -384,7 +388,8 @@ after_bundle do
   git commit: "-m 'feat: add migration after initial setup.'"
 end
 
-# Key Differences from Bootstrap Template:
+
+# Key Differences from `rails-7/bootstrap.rb` Template:
 # 1. No Sprockets/Asset Pipeline Setup: Removed all Bootstrap-specific gems (`sprockets-rails`, `bootstrap`, `autoprefixer-rails`, `font-awesome-sass`, sassc-rails).
 
 # 2. Tailwind CSS Gem: Added gem `tailwindcss-rails` instead of Bootstrap gems.
