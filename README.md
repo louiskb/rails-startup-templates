@@ -153,8 +153,6 @@ rails7-tailwind-min()   # Tailwind only
 rails7-min()            # No CSS, no extras
 ```
 
-Example usage: run `rails7-bootstrap app-name`
-
 Add these to your `~/.zshrc` or `~/.bashrc` for quick app creation:
 
 ```bash
@@ -402,29 +400,31 @@ Modular templates in `shared/` directory can be applied to existing Rails apps:
 
 ```bash
 # Apply devise to existing app
-rails app:template LOCATION=https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/shared/devise.rb
+rails app:template LOCATION=https://raw.githubusercontent.com/louiskb/rails-startup-templates/refs/heads/master/shared/devise.rb
 
 # Apply navbar to existing app
-rails app:template LOCATION=https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/shared/navbar.rb
+rails app:template LOCATION=https://raw.githubusercontent.com/louiskb/rails-startup-templates/refs/heads/master/shared/navbar.rb
 
 # Apply testing setup
-rails app:template LOCATION=https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/shared/testing.rb
+rails app:template LOCATION=https://raw.githubusercontent.com/louiskb/rails-startup-templates/refs/heads/master/shared/testing.rb
 
 # Apply security features
-rails app:template LOCATION=https://raw.githubusercontent.com/louiskb/rails-startup-templates/main/shared/security.rb
+rails app:template LOCATION=https://raw.githubusercontent.com/louiskb/rails-startup-templates/refs/heads/master/shared/security.rb
 ```
 
 Available shared modules (compatible with both Rails 7 & 8):
-- `devise.rb` - User authentication with Devise
-- `navbar.rb` - Navigation bar (Le Wagon style or custom)
-- `testing.rb` - RSpec, FactoryBot, Faker setup
-- `dev_tools.rb` - Better Errors, Annotate, Awesome Print
-- `security.rb` - Security headers & rate limiting
-- `pagination.rb` - Pagy pagination
-- `active_storage.rb` - File upload configuration
-- `image_processing.rb` - Image manipulation setup
-- `friendly_urls.rb` - SEO-friendly URLs with FriendlyId
-- `admin.rb` - Admin dashboard with ActiveAdmin
+1. `navbar.rb` - Navigation bar (Le Wagon style or custom)
+2. `testing.rb` - RSpec, FactoryBot, Faker setup
+3. `image_upload_cloudinary.rb` - Active Storage with Cloudinary for image uploads
+4. `dev_tools.rb` - Better Errors, Annotate, Awesome Print
+5. `security.rb` - Security headers & rate limiting
+6. `pagination.rb` - Pagy pagination
+7. `friendly_urls.rb` - SEO-friendly URLs with FriendlyId
+8. `admin.rb` - Admin dashboard with ActiveAdmin
+9. `devise.rb` - User authentication with Devise
+10. `authentication.rb` - Native Rails user authentication (Only works with Rails 8 templates)
+11. `bootstrap.rb` - Bootstrap (Only works with Rails 7 and 8 `custom.rb` template)
+12. `tailwind.rb` - Tailwind CSS (Only works with Rails 7 and 8 `custom.rb` template)
 
 ## Local Development & Testing
 
