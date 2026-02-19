@@ -412,6 +412,7 @@ after_bundle do
   git commit: "-m 'feat: add migration after initial setup.'"
 end
 
+say "✅ Rails 7 Custom template installation complete!", :green
 
 # Key features:
 # 1. Interactive CSS choice first: `b` → `shared/bootstrap.rb, t` → `shared/tailwind.rb`, `v`/`n` → `vanilla`.

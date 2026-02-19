@@ -469,6 +469,8 @@ after_bundle do
   git commit: "-m 'feat: add migration after initial setup.'"
 end
 
+say "✅ Rails 8 Bootstrap template installation complete!", :green
+
 # MAIN TODO:
 # 1. Build out all the shared templates first before building the main templates. [DONE]
 # 2. Build main templates with shared template integration. [ONGOING]
@@ -476,6 +478,6 @@ end
 #
 # RAILS 8 TEMPLATES TODO:
 # 1. Standard integration: add `authentication` interactive `case` logic into all main rails 8 templates. [DONE]
-# 2. Create `shared/authentication.rb`. Inside `app/views/registrations/new.html.erb`, make the sign-up form use `simple-form` and style "dynamically" with bootstrap and tailwind. Make sure the typical shared template GUARDS and SUPPORTS are in place. 
+# 2. Create `shared/authentication.rb`. Inside `app/views/registrations/new.html.erb`, make the sign-up form use `simple-form` and style "dynamically" with bootstrap and tailwind. Make sure the typical shared template GUARDS and SUPPORTS are in place. [DONE]
 # 3. Add `AUTH` env var to rails 8 shell functions in `shell-functions.txt` and `README.md`.
 # 4. Specify any latest rails 7 or 8 versions to shell functions in `rails _VERSION_ new`. Use the correct syntax so it adapts to other user's local machine rails environment.

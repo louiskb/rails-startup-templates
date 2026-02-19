@@ -388,6 +388,7 @@ after_bundle do
   git commit: "-m 'feat: add migration after initial setup.'"
 end
 
+say "✅ Rails 7 Tailwind template installation complete!", :green
 
 # Key Differences from `rails-7/bootstrap.rb` Template:
 # 1. No Sprockets/Asset Pipeline Setup: Removed all Bootstrap-specific gems (`sprockets-rails`, `bootstrap`, `autoprefixer-rails`, `font-awesome-sass`, sassc-rails).

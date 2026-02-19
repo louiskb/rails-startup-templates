@@ -449,3 +449,5 @@ after_bundle do
   git add: "."
   git commit: "-m 'feat: add migration after initial setup.'"
 end
+
+say "✅ Rails 7 Bootstrap template installation complete!", :green
