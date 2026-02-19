@@ -141,6 +141,7 @@ Add these to your `~/.zshrc` or `~/.bashrc` for quick app creation:
 
 ```bash
 # Rails 8 vs 7 template differences = (1) choice between native `authentication` setup vs `devise` in Rails 8 templates.
+# Check Rails version(s) on local machine `gem list rails` and specify in shell functions `rails <version> new...` e.g.`rails _8.1.2_ new...`
 
 # Replace YOUR_USERNAME with your GitHub username
 export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates"
@@ -151,39 +152,40 @@ export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rai
 
 rails8-bootstrap() {
   # Bootstrap + asks for extras
-  rails new "$1" -d postgresql \
+  rails _8.1.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
 rails8-tailwind() {
   # Tailwind + asks for extras
-  rails new "$1" -d postgresql \
+  rails _8.1.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
 rails8-custom() {
   # Asks CSS + asks for extras
-  rails new "$1" -d postgresql \
+  rails _8.1.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/custom.rb
 }
 
 ##############################################
 # RAILS 8 - All-inclusive shortcuts (no prompts)
 ##############################################
+# Rails 8 main templates always defaults to Devise vs native authentication unless changed (e.g. DEVISE=false AUTH=true).
 
 rails8-bootstrap-all() {
   # Bootstrap + all extras
-  DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  DEVISE=true AUTH=false RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true FRIENDLY_URLS=true ADMIN=true \
-  rails new "$1" -d postgresql \
+  rails _8.1.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
 rails8-tailwind-all() {
   # Tailwind + all extras
-  DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
+  DEVISE=true AUTH=false RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true FRIENDLY_URLS=true ADMIN=true \
-  rails new "$1" -d postgresql \
+  rails _8.1.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
@@ -193,24 +195,26 @@ rails8-tailwind-all() {
 
 rails8-bootstrap-min() {
   # Bootstrap only (no extras)
-  DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
-  rails new "$1" -d postgresql \
+  rails _8.1.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
 rails8-tailwind-min() {
   # Tailwind only (no extras)
-  DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
+  DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
-  rails new "$1" -d postgresql \
+  rails _8.1.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
 rails8-min() {
   # No CSS, no extras (bare Rails 8)
-  rails new "$1" -d postgresql \
-    -m $RAILS_TEMPLATES_BASE/rails-8/rails8-min.rb
+  BOOTSTRAP=false TAILWIND=false DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false \
+  DEV_TOOLS=false SECURITY=false PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
+  rails _8.1.2_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/custom.rb
 }
 
 ##############################################
@@ -219,19 +223,19 @@ rails8-min() {
 
 rails7-bootstrap() {
   # Bootstrap + asks for extras
-  rails _7.2.2_ new "$1" -d postgresql \
+  rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/bootstrap.rb
 }
 
 rails7-tailwind() {
   # Tailwind + asks for extras
-  rails _7.2.2_ new "$1" -d postgresql \
+  rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
 }
 
 rails7-custom() {
   # Asks CSS + asks for extras
-  rails _7.2.2_ new "$1" -d postgresql \
+  rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/custom.rb
 }
 
@@ -243,7 +247,7 @@ rails7-bootstrap-all() {
   # Bootstrap + all extras
   DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true FRIENDLY_URLS=true ADMIN=true \
-  rails _7.2.2_ new "$1" -d postgresql \
+  rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/bootstrap.rb
 }
 
@@ -251,7 +255,7 @@ rails7-tailwind-all() {
   # Tailwind + all extras
   DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true FRIENDLY_URLS=true ADMIN=true \
-  rails _7.2.2_ new "$1" -d postgresql \
+  rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
 }
 
@@ -263,7 +267,7 @@ rails7-bootstrap-min() {
   # Bootstrap only (no extras)
   DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
-  rails _7.2.2_ new "$1" -d postgresql \
+  rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/bootstrap.rb
 }
 
@@ -271,14 +275,16 @@ rails7-tailwind-min() {
   # Tailwind only (no extras)
   DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
-  rails _7.2.2_ new "$1" -d postgresql \
+  rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
 }
 
 rails7-min() {
   # No CSS, no extras (bare Rails 7)
-  rails _7.2.2_ new "$1" -d postgresql \
-    -m $RAILS_TEMPLATES_BASE/rails-7/rails7-min.rb
+  BOOTSTRAP=false TAILWIND=false DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false \
+  DEV_TOOLS=false SECURITY=false PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
+  rails _7.1.6_ new "$1" -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-7/custom.rb
 }
 ```
 
