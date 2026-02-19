@@ -79,41 +79,46 @@ RUBY
 # User says NO → skip (don't add gem)
 
 # CSS framework choice (first interactive prompt)
-css_choice = ask("Choose CSS framework? (b = bootstrap, t = tailwind, v = vanilla/none): ", limited_to: "b t v n").downcase
+if should_install?("tailwind", "Install CSS framework? (y/n)")
 
-# Add appropriate gems first and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
-case css_choice
-when "b"
-  say "Bootstrap installing...", :blue
-  # Core Bootstrap gems
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "sprockets-rails"
-      gem "bootstrap", "~> 5.3"
-      gem "autoprefixer-rails"
-      gem "font-awesome-sass", "~> 6.1"
-      gem "simple_form", github: "heartcombo/simple_form"
-      gem "sassc-rails"
+  css_choice = ask("Choose CSS framework? (b = bootstrap, t = tailwind, v = vanilla/none)", limited_to: "b t v n").downcase
 
-    RUBY
+  # Add appropriate gems first and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
+  case css_choice
+  when "b"
+    if should_install?("bootstrap", "Install Bootstrap? (y/n)")
+      say "Bootstrap installing...", :blue
+      # Core Bootstrap gems
+      inject_into_file "Gemfile", before: "group :development, :test do" do
+        <<~RUBY
+          gem "sprockets-rails"
+          gem "bootstrap", "~> 5.3"
+          gem "autoprefixer-rails"
+          gem "font-awesome-sass", "~> 6.1"
+          gem "simple_form", github: "heartcombo/simple_form"
+          gem "sassc-rails"
+
+        RUBY
+      end
+    end
+
+    # Replace Propshaft with Sprockets if present
+    gsub_file("Gemfile", /^gem "propshaft".*\n/, "")
+
+  when "t"
+    say "Tailwind installing...", :blue
+    # Tailwind gem
+    inject_into_file "Gemfile", before: "group :development, :test do" do
+      <<~RUBY
+        gem "tailwindcss-rails"
+        gem "simple_form", github: "heartcombo/simple_form"
+
+      RUBY
+    end
+
+  else
+    say "Vanilla CSS - no framework installed.", :yellow
   end
-
-  # Replace Propshaft with Sprockets if present
-  gsub_file("Gemfile", /^gem "propshaft".*\n/, "")
-
-when "t"
-  say "Tailwind installing...", :blue
-  # Tailwind gem
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "tailwindcss-rails"
-      gem "simple_form", github: "heartcombo/simple_form"
-
-    RUBY
-  end
-
-else
-  say "Vanilla CSS - no framework installed.", :yellow
 end
 
 # devise
