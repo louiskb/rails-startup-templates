@@ -100,6 +100,16 @@ environment generators
 # User says YES → add gem to Gemfile
 # User says NO → skip (don't add gem)
 
+# devise
+if should_install?("devise", "Install Devise? (y/n)")
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "devise"
+
+    RUBY
+  end
+end
+
 # dev_tools
 if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate', 'Rubocop')? (y/n)")
   inject_into_file "Gemfile", after: "group :development do\n" do
@@ -118,16 +128,6 @@ if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate',
     <<~RUBY
       gem "rubocop", require: false
       gem "rubocop-rails", require: false
-
-    RUBY
-  end
-end
-
-# devise
-if should_install?("devise", "Install Devise? (y/n)")
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "devise"
 
     RUBY
   end

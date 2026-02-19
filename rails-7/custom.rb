@@ -112,6 +112,16 @@ else
   say "Vanilla CSS - no framework installed.", :yellow
 end
 
+# devise
+if should_install?("devise", "Install Devise? (y/n)")
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "devise"
+
+    RUBY
+  end
+end
+
 # dev_tools
 if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate', 'Rubocop')? (y/n)")
   inject_into_file "Gemfile", after: "group :development do\n" do
@@ -130,16 +140,6 @@ if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate',
     <<~RUBY
       gem "rubocop", require: false
       gem "rubocop-rails", require: false
-
-    RUBY
-  end
-end
-
-# devise
-if should_install?("devise", "Install Devise? (y/n)")
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "devise"
 
     RUBY
   end
@@ -308,15 +308,6 @@ after_bundle do
     git commit: "-m 'feat: install tailwind.'"
   end
 
-  # shared/dev_tools.rb
-  if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
-    apply source_path("shared/dev_tools.rb")
-
-    # Git
-    git add: "."
-    git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
-  end
-
   # shared/devise.rb
   if gemfile.include?("gem \"devise\"")
     # Gem was added → run shared/devise.rb shared template setup.
@@ -325,6 +316,15 @@ after_bundle do
     # Git
     git add: "."
     git commit: "-m 'feat: install devise.'"
+  end
+
+  # shared/dev_tools.rb
+  if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
+    apply source_path("shared/dev_tools.rb")
+
+    # Git
+    git add: "."
+    git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
   end
 
   # shared/admin.rb (Devise required before installation)

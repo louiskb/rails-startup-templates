@@ -7,8 +7,8 @@
 
 # GUARD 1: Check if Devise is fully installed (config + model exist).
 # Skip entire template if Devise is already complete.
-if File.exist?("config/initializers/devise.rb") && File.exist?("app/models/user.rb")
-  say "Devise already installed (config + User exist), skipping.", :yellow
+if File.exist?("config/initializers/devise.rb") && File.exist?("app/models/user.rb") || File.exist?("app/controllers/concerns/authentication.rb") || File.exist?("app/models/session.rb") || File.exist?("app/models/current.rb")
+  say "Devise or native authentication (Rails 8) is already installed, skipping.", :yellow
   exit # Early exit
 end
 
@@ -23,7 +23,7 @@ if !gemfile.include?('gem "devise"') && !gemfile.include?("gem 'devise'")
     # Note the blank line inside the heredoc to keep Gemfile formatting clean.
     <<~RUBY
       gem "devise"
-      
+
     RUBY
   end
 
