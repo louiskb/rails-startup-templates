@@ -144,7 +144,7 @@ environment generators
 # Authentication choice (first interactive prompt)
 if should_install?("auth", "Install authentication? (y/n)")
 
-  auth_choice = ask("Choose authentication? (d = devise, r = rails 8 native, n = none)", limited_to: "d r n").downcase
+  auth_choice = ask("Choose authentication? (d = devise, r = rails 8 native, n = none)", limited_to: %w[d r n]).downcase
 
   # Add appropriate gems first (if any) and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
   case auth_choice
@@ -164,6 +164,16 @@ if should_install?("auth", "Install authentication? (y/n)")
     # Rails 8 native `authentication` does not have a gem.
   else
     say "No Authentication installed.", :yellow
+  end
+end
+
+# admin (devise required before installation) - an admin dashboard for CRUD operations on models.
+if should_install?("admin", "Install Active Admin (devise or native authentication required)? (y/n)")
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "activeadmin"
+
+    RUBY
   end
 end
 
@@ -191,17 +201,6 @@ if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate',
     <<~RUBY
       gem "rubocop", require: false
       gem "rubocop-rails", require: false
-
-    RUBY
-  end
-end
-
-# admin (devise required before installation) - an admin dashboard for CRUD operations on models.
-if should_install?("admin", "Install Active Admin - a dashboard for CRUD operations on models? (y/n)")
-
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "activeadmin"
 
     RUBY
   end
@@ -384,15 +383,6 @@ after_bundle do
     git commit: "-m 'feat: install rails 8 native authentication.'"
   end
 
-  # shared/dev_tools.rb
-  if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
-    apply source_path("shared/dev_tools.rb")
-
-    # Git
-    git add: "."
-    git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
-  end
-
   # shared/admin.rb (Devise required before installation)
   if gemfile.include?('gem "activeadmin"')
     apply source_path("shared/admin.rb")
@@ -400,6 +390,15 @@ after_bundle do
     # Git
     git add: "."
     git commit: "-m 'feat: install active admin.'"
+  end
+
+  # shared/dev_tools.rb
+  if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
+    apply source_path("shared/dev_tools.rb")
+
+    # Git
+    git add: "."
+    git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
   end
 
   # shared/friendly_urls.rb

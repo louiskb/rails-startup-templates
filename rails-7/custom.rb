@@ -81,7 +81,7 @@ RUBY
 # CSS framework choice (first interactive prompt)
 if should_install?("tailwind", "Install CSS framework? (y/n)")
 
-  css_choice = ask("Choose CSS framework? (b = bootstrap, t = tailwind, v = vanilla/none)", limited_to: "b t v n").downcase
+  css_choice = ask("Choose CSS framework? (b = bootstrap, t = tailwind, v = vanilla/none)", limited_to: %w[b t v n]).downcase
 
   # Add appropriate gems first and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
   case css_choice
@@ -131,6 +131,16 @@ if should_install?("devise", "Install Devise? (y/n)")
   end
 end
 
+# admin (devise required before installation) - an admin dashboard for CRUD operations on models.
+if should_install?("admin", "Install Active Admin (devise required)? (y/n)")
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "activeadmin"
+
+    RUBY
+  end
+end
+
 # dev_tools
 if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate', 'Rubocop')? (y/n)")
   inject_into_file "Gemfile", after: "group :development do\n" do
@@ -149,16 +159,6 @@ if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate',
     <<~RUBY
       gem "rubocop", require: false
       gem "rubocop-rails", require: false
-
-    RUBY
-  end
-end
-
-# admin (devise required before installation)
-if should_install?("admin", "Install Active Admin - a dashboard for CRUD operations on models? (y/n)")
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "activeadmin"
 
     RUBY
   end
@@ -327,6 +327,15 @@ after_bundle do
     git commit: "-m 'feat: install devise.'"
   end
 
+   # shared/admin.rb (Devise required before installation)
+  if gemfile.include?('gem "activeadmin"')
+    apply source_path("shared/admin.rb")
+
+    # Git
+    git add: "."
+    git commit: "-m 'feat: install active admin.'"
+  end
+
   # shared/dev_tools.rb
   if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
     apply source_path("shared/dev_tools.rb")
@@ -334,15 +343,6 @@ after_bundle do
     # Git
     git add: "."
     git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
-  end
-
-  # shared/admin.rb (Devise required before installation)
-  if gemfile.include?('gem "activeadmin"')
-    apply source_path("shared/admin.rb")
-
-    # Git
-    git add: "."
-    git commit: "-m 'feat: install active admin.'"
   end
 
   # shared/friendly_urls.rb

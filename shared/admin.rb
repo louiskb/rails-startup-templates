@@ -5,6 +5,7 @@
 # 1. Fresh app: called from main template INSIDE `after_bundle` (gems already added/bundles by main template).
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/admin.rb`).
 
+gemfile = File.read("Gemfile")
 # GUARD 1: Skip entire template if ActiveAdmin is already installed.
 if File.exist?("config/initializers/active_admin.rb")
   say "ActiveAdmin already initialized, skipping.", :yellow
@@ -36,14 +37,13 @@ end
 # STANDALONE SUPPORT: Add gem if missing (existing apps only).
 # Inside conditional, once gem added to `Gemfile`, run `bundle install` if not already executed.
 # Fresh apps: main template already added gem → this skips.
-gemfile = File.read("Gemfile")
 if !gemfile.match?(/^gem.*['"]activeadmin['"]/)
   say "Adding ActiveAdmin gem to Gemfile...", :blue
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "activeadmin"
-      
+
     RUBY
   end
 
