@@ -211,7 +211,7 @@ rails8-tailwind-min() {
 
 rails8-min() {
   # No CSS, no extras (bare Rails 8)
-  BOOTSTRAP=false TAILWIND=false DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false \
+  BOOTSTRAP=false TAILWIND=false DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false \
   DEV_TOOLS=false SECURITY=false PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
   rails _8.1.2_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/custom.rb
