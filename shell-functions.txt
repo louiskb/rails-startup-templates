@@ -20,6 +20,39 @@
 # To v3 later (future)
 # cp ~/.zshrc ~/.zshrc.v3.backup
 
+# SHELL FUNCTION LIST: (quick reference)
+# (Example usage: run `rails7-bootstrap app-name`)
+#
+###### RAILS 8: ######
+#### Rails 8 - interactive mode ####
+# `rails8-bootstrap` → # Bootstrap + asks for extras
+# `rails8-tailwind` → # Tailwind + asks for extras
+# `rails8-custom` → # Asks CSS + asks for extras
+#
+#### Rails 8 - everything ####
+# `rails8-bootstrap-all` → # Bootstrap + all extras
+# `rails8-tailwind-all` → # Tailwind + all extras
+#
+#### Rails 8 - minimal ####
+# `rails8-bootstrap-min` → # Bootstrap only (no extras)
+# `rails8-tailwind-min` → # Tailwind only (no extras)
+# `rails8-min` → # No CSS, no extras (bare Rails 8)
+#
+###### RAILS 7: ######
+#### Rails 7 - interactive mode ####
+# `rails7-bootstrap` → # Bootstrap + asks for extras
+# `rails7-tailwind` → # Tailwind + asks for extras
+# `rails7-custom` → # Asks CSS + asks for extras
+#
+#### Rails 7 - everything ####
+# `rails7-bootstrap-all` → # Bootstrap + all extras
+# `rails7-tailwind-all` → # Tailwind + all extras
+#
+#### Rails 7 - minimal ####
+# `rails7-bootstrap-min` → # Bootstrap only (no extras)
+# `rails7-tailwind-min` → # Tailwind only (no extras)
+# `rails7-min` → # No CSS, no extras (bare Rails 7)
+
 # Replace YOUR_USERNAME with your GitHub username.
 # Can replace RAILS_TEMPLATES_BASE with local path.
 export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates"

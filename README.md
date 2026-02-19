@@ -122,6 +122,7 @@ rails new my_app -d postgresql -m TEMPLATE_URL my_app
 
 ### Naming Structure for Helper Functions
 ```bash
+#### Rails 8 ####
 # Interactive modes
 rails8-bootstrap()   # Bootstrap + asks for extras
 rails8-tailwind()    # Tailwind + asks for extras
@@ -135,7 +136,24 @@ rails8-tailwind-all()   # Tailwind + all extras
 rails8-bootstrap-min()  # Bootstrap only
 rails8-tailwind-min()   # Tailwind only
 rails8-min()            # No CSS, no extras
+
+#### Rails 7 ####
+# Interactive modes
+rails7-bootstrap()   # Bootstrap + asks for extras
+rails7-tailwind()    # Tailwind + asks for extras
+rails7-custom()      # Asks CSS + asks for extras
+
+# All-inclusive shortcuts
+rails7-bootstrap-all()  # Bootstrap + all extras
+rails7-tailwind-all()   # Tailwind + all extras
+
+# Minimal shortcuts
+rails7-bootstrap-min()  # Bootstrap only
+rails7-tailwind-min()   # Tailwind only
+rails7-min()            # No CSS, no extras
 ```
+
+Example usage: run `rails7-bootstrap app-name`
 
 Add these to your `~/.zshrc` or `~/.bashrc` for quick app creation:
 
