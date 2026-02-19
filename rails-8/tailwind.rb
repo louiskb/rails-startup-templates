@@ -101,24 +101,29 @@ environment generators
 # User says NO → skip (don't add gem)
 
 # Authentication choice (first interactive prompt)
-auth_choice = ask("Choose Authentication? (a = rails 8 native, d = devise, n = none)", limited_to: "a d n").downcase
+if should_install?("auth", "Install authentication? (y/n)")
 
-# Add appropriate gems first (if any) and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
-case auth_choice
-when "a"
-  say "Rails 8 native Authentication installing...", :blue
-  # Rails 8 native `authentication` does not have a gem.
-when "d"
-  say "Devise installing...", :blue
-  # Add devise gem to Gemfile (before `bundle install`)
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "devise"
+  auth_choice = ask("Choose authentication? (d = devise, r = rails 8 native, n = none)", limited_to: "d r n").downcase
 
-    RUBY
+  # Add appropriate gems first (if any) and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
+  case auth_choice
+  when "d"
+    if should_install?("devise", "Install Devise? (y/n)")
+      say "Devise installing...", :blue
+      # Add devise gem to Gemfile (before `bundle install`)
+      inject_into_file "Gemfile", before: "group :development, :test do" do
+        <<~RUBY
+          gem "devise"
+
+        RUBY
+      end
+    end
+  when "r"
+    say "Rails 8 native Authentication installing...", :blue
+    # Rails 8 native `authentication` does not have a gem.
+  else
+    say "No Authentication installed.", :yellow
   end
-else
-  say "No Authentication installed.", :yellow
 end
 
 # dev_tools
@@ -311,16 +316,6 @@ after_bundle do
   # File.read() checks if gem was added in Step 2.
   gemfile = File.read("Gemfile")
 
-  # shared/authentication.rb
-  if auth_choice == "a"
-    # Rails 8 native `authentication` has no gem, so checks for `auth_choice` value (chosen by user) inside interactive (authentication)`case` conditional.
-    apply source_path("shared/authentication")
-
-    # Git
-    git add: "."
-    git commit: "-m 'feat: install rails 8 native authentication.'"
-  end
-
   # shared/devise.rb
   if gemfile.include?("gem \"devise\"")
     apply source_path("shared/devise.rb")
@@ -328,6 +323,16 @@ after_bundle do
     # Git
     git add: "."
     git commit: "-m 'feat: install devise.'"
+  end
+
+  # shared/authentication.rb
+  if auth_choice == "r"
+    # Rails 8 native `authentication` has no gem, so checks for `auth_choice` value (chosen by user) inside interactive (authentication)`case` conditional.
+    apply source_path("shared/authentication")
+
+    # Git
+    git add: "."
+    git commit: "-m 'feat: install rails 8 native authentication.'"
   end
 
   # shared/dev_tools.rb
