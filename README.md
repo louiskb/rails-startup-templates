@@ -140,10 +140,30 @@ rails8-min()            # No CSS, no extras
 Add these to your `~/.zshrc` or `~/.bashrc` for quick app creation:
 
 ```bash
+# RAILS 8 & 7 TEMPLATE SHELL FUNCTIONS (ZSH):
 # Rails 8 vs 7 template differences = (1) choice between native `authentication` setup vs `devise` in Rails 8 templates.
 # Check Rails version(s) on local machine `gem list rails` and specify in shell functions `rails <version> new...` e.g.`rails _8.1.2_ new...`
 
-# Replace YOUR_USERNAME with your GitHub username
+# `.zshrc` BACKUP:
+# `~/.zshrc` = your terminal's "settings file".
+# Create backup (in case of bad code or syntax error in Rails template shell functions = terminal breaks when loading settings) `cp ~/.zshrc ~/.zshrc.rails.templates.v1.backup`.
+# Restore good settings using a new terminal tab `cp ~/.zshrc.rails.templates.v1.backup ~/.zshrc` = quick fix to recover the original broken terminal tab.
+# `~/.zshrc.backup` already exists with settings before adding Rails template shell functions.
+# Revert to original settings `cp ~/.zshrc.backup ~/.zshrc`
+# `source ~/.zshrc` (or `. ~/.zshrc`) reloads Zsh shell configuration without starting a new shell.
+#
+# SUMMARY for reference:
+# To original (no functions)
+#cp ~/.zshrc.backup ~/.zshrc && source ~/.zshrc
+#
+# To rails templates (with functions)
+# cp ~/.zshrc.rails.templates.v1.backup ~/.zshrc && source ~/.zshrc
+#
+# To v3 later (future)
+# cp ~/.zshrc ~/.zshrc.v3.backup
+
+# Replace YOUR_USERNAME with your GitHub username.
+# Can replace RAILS_TEMPLATES_BASE with local path.
 export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates"
 
 ##############################################
