@@ -9,6 +9,8 @@
 # Kill Spring if running (macOS)
 run "if uname | grep -q 'Darwin'; then pgrep spring | xargs kill -9; fi"
 
+# STEP 1: CORE SETUP
+
 # Helper functions
 def should_install?(feature, prompt)
   env_value = ENV[feature.upcase]
