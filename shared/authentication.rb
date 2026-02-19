@@ -51,17 +51,45 @@ file "app/controllers/registrations_controller.rb", <<~RUBY
 RUBY
 
 # Registration new sign-up view (Simple Form + flashes)
+# Dynamically styled depending on selected CSS framework.
 # Add navbar link: `link_to "Sign up", new_registration_path`.
-file "app/views/registrations/new.html.erb", <<~HTML
-  <%= render "shared/flashes" %>
-  <h1>Sign up</h1>
-  <%= simple_form_for @user do |f| %>
-    <%= f.input :email_address %>
-    <%= f.input :password %>
-    <%= f.input :password_confirmation %>
-    <%= f.button :submit, "Sign up" %>
-  <% end %>
-HTML
+if File.exist?("app/assets/stylesheets") && Dir.glob("app/assets/stylesheets/*bootstrap*").any?
+  # Bootstrap
+  file "app/views/registrations/new.html.erb", <<~HTML
+    <%= render "shared/flashes" %>
+    <h1>Sign up</h1>
+    <%= simple_form_for @user do |f| %>
+      <%= f.input :email_address %>
+      <%= f.input :password %>
+      <%= f.input :password_confirmation %>
+      <%= f.button :submit, "Sign up", class: "btn btn-primary my-3" %>
+    <% end %>
+  HTML
+elsif File.exist?("config/tailwind.config.js")
+  # Tailwind CSS
+  file "app/views/registrations/new.html.erb", <<~HTML
+    <%= render "shared/flashes" %>
+    <h1>Sign up</h1>
+    <%= simple_form_for @user do |f| %>
+      <%= f.input :email_address %>
+      <%= f.input :password %>
+      <%= f.input :password_confirmation %>
+      <%= f.button :submit, "Sign up", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3" %>
+    <% end %>
+  HTML
+else
+  # Vanilla CSS
+  file "app/views/registrations/new.html.erb", <<~HTML
+    <%= render "shared/flashes" %>
+    <h1>Sign up</h1>
+    <%= simple_form_for @user do |f| %>
+      <%= f.input :email_address %>
+      <%= f.input :password %>
+      <%= f.input :password_confirmation %>
+      <%= f.button :submit, "Sign up" %>
+    <% end %>
+  HTML
+end
 
 # Home page skip auth
 inject_into_file "app/controllers/pages_controller.rb", after: "class PagesController" do
