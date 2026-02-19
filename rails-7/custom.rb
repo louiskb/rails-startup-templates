@@ -82,6 +82,7 @@ css_choice = ask("Choose CSS framework? (b = bootstrap, t = tailwind, v = vanill
 # Add appropriate gems first and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
 case css_choice
 when "b"
+  say "Bootstrap installing...", :blue
   # Core Bootstrap gems
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
@@ -99,6 +100,7 @@ when "b"
   gsub_file("Gemfile", /^gem "propshaft".*\n/, "")
 
 when "t"
+  say "Tailwind installing...", :blue
   # Tailwind gem
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
