@@ -144,12 +144,31 @@ environment generators
 # devise
 if should_install?("devise", "Install Devise? (y/n)")
   # Add devise gem to Gemfile (before `bundle install`)
-  # Note the blank line inside the heredoc to keep Gemfile formatting clean.
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "devise"
+  # Note the blank line inside the heredoc to keep "Gemfile" formatting clean.
 
-    RUBY
+  # Default to Devise v4.9 if `DEVISE=true` (ENV variable set in shell functions) (non-interactive).
+  if ENV["DEVISE"] == "true"
+    inject_into_file "Gemfile", before: "group :development, :test do" do
+      <<~RUBY
+        gem "devise", "~> 4.9"
+
+    end
+    say("`DEVISE=true` detected: Installing Devise v4.9 for Active Admin compatibility.", :green)
+  else
+    # Interactive version choice
+    devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
+
+    version_choice = case devise_choice
+    when "y" then '"~> 4.9"'
+    else '""' # Empty → latest version
+    end
+
+    inject_into_file "Gemfile", before: "group :development, :test do" do
+      <<~RUBY
+        gem "devise#{version_choice}"
+
+      RUBY
+    end
   end
 end
 
