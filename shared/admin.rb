@@ -14,7 +14,7 @@ end
 
 # GUARD 2: Check if Devise is installed as a pre-requisite.
 if !File.exist?("config/initializers/devise.rb") && !File.exist?("app/models/user.rb")
-  say "❌ Devise is required, aborting ActiveAdmin installation.", :red
+  say "❌ Devise is required, skipping ActiveAdmin installation.", :yellow
   exit
 end
 
