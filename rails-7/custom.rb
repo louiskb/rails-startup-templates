@@ -127,38 +127,44 @@ if should_install?("devise", "Install Devise? (y/n)")
   # Note the blank line inside the heredoc to keep "Gemfile" formatting clean.
 
   # Default to Devise v4.9 if `DEVISE=true` (ENV variable set in shell functions) (non-interactive).
-  if ENV["DEVISE"] == "true"
+  if ENV.fetch("DEVISE", "") == "true"
     inject_into_file "Gemfile", before: "group :development, :test do" do
       <<~RUBY
         gem "devise", "~> 4.9"
 
+      RUBY
     end
     say("`DEVISE=true` detected: Installing Devise v4.9 for Active Admin compatibility.", :green)
   else
-    # Interactive version choice
+    # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
     devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
 
-    version_choice = case devise_choice
-    when "y" then '"~> 4.9"'
-    else '""' # Empty → latest version
+    gem_line = if devise_choice == "y"
+      'gem "devise", "~> 4.9"'
+    else
+      'gem "devise"'
     end
 
     inject_into_file "Gemfile", before: "group :development, :test do" do
       <<~RUBY
-        gem "devise#{version_choice}"
+        #{gem_line}
 
       RUBY
     end
+
+    say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
   end
 end
 
-# admin (devise required before installation) - an admin dashboard for CRUD operations on models.
-if should_install?("admin", "Install Active Admin (devise required)? (y/n)")
-  inject_into_file "Gemfile", before: "group :development, :test do" do
-    <<~RUBY
-      gem "activeadmin"
+# admin (devise v4.9 required before installation) - an admin dashboard for CRUD operations on models.
+if File.read("Gemfile").include?('gem "devise", "~> 4.9"')
+  if should_install?("admin", "Install Active Admin (devise required)? (y/n)")
+    inject_into_file "Gemfile", before: "group :development, :test do" do
+      <<~RUBY
+        gem "activeadmin"
 
-    RUBY
+      RUBY
+    end
   end
 end
 
@@ -431,14 +437,15 @@ after_bundle do
   end
 
   # Run all migrations towards the end of `after_bundle`.
-  rails_command "db:migrate"
+  rails_command "db:migrate db:seed"
 
   # Git
   git add: "."
   git commit: "-m 'feat: add migration after initial setup.'"
+
+  say "✅ Rails 7 Custom template installation complete!", :green
 end
 
-say "✅ Rails 7 Custom template installation complete!", :green
 
 # Key features:
 # 1. Interactive CSS choice first: `b` → `shared/bootstrap.rb, t` → `shared/tailwind.rb`, `v`/`n` → `vanilla`.

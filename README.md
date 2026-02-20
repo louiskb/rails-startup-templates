@@ -182,7 +182,7 @@ Add these to your `~/.zshrc` or `~/.bashrc` for quick app creation:
 # Can replace RAILS_TEMPLATES_BASE with local path.
 export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates"
 
-# If `DEVISE=true`, it defaults to Devise v4.9 instead of the latest version for Active Admin compatibility. 
+# If `DEVISE=true`, it defaults to Devise v4.9 instead of the latest version for Active Admin compatibility.
 
 ##############################################
 # RAILS 8 - Interactive modes (prompts for extras)
