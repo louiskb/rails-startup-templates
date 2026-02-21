@@ -167,7 +167,10 @@ if should_install?("auth", "Install authentication? (y/n)")
     end
   when "r"
     say "Rails 8 native Authentication installing...", :blue
+
     # Rails 8 native `authentication` does not have a gem.
+    # Create a `.txt` file to use later inside `after_bundle` as reference to `apply source_path(shared/authentication.rb)`.
+    file "authentication.txt", "confirm"
   else
     say "No Authentication installed.", :yellow
   end
@@ -372,9 +375,10 @@ after_bundle do
   end
 
   # shared/authentication.rb
-  if auth_choice == "r"
-    # Rails 8 native `authentication` has no gem, so checks for `auth_choice` value (chosen by user) inside interactive (authentication)`case` conditional.
-    apply source_path("shared/authentication")
+  if File.exist?("authentication.txt")
+    # Rails 8 native `authentication` has no gem, so checks for `authentication.txt` file created before `after_bundle` to confirm user choice. After applying `shared/authentication.rb`, `authentication.txt` is deleted.
+    apply source_path("shared/authentication.rb")
+    run "rm -f authentication.txt"
 
     # Git
     git add: "."

@@ -110,8 +110,8 @@ rails new my_app -d postgresql -m TEMPLATE_URL my_app
 | **Pagination** | `PAGINATION=true/false` | Pagy gem with helper configuration |
 | **Image Upload Cloudinary** | `IMAGE_UPLOAD_CLOUDINARY=true/false` | ActiveStorage and Cloudinary configuration |
 | **Friendly URLs** | `FRIENDLY_URLS=true/false` | FriendlyId gem for slug-based ID/URLs |
-| **Admin** | `ADMIN=true/false` | ActiveAdmin auto CRUD dashboard with authentication |
 | **Ruby LLM** | `ADMIN=true/false` | RubyLLM for AI models Integration |
+| **Admin** | `ADMIN=true/false` | ActiveAdmin auto CRUD dashboard with authentication | Devise is required and currently only compatible with Devise versions below v5.0. When using templates, only use with Devise v4.9 |
 | **Bootstrap** | `DEVISE=true/false` | Bootstrap integration | Only use with `custom.rb` main template |
 | **Tailwind** | `DEVISE=true/false` | Tailwind CSS integration | Only use with `custom.rb` main template |
 | **Authentication** | `DEVISE=true/false` | Rails 8 native authentication | Only use with Rails 8 main templates |
@@ -422,7 +422,7 @@ Available shared modules (compatible with both Rails 7 & 8):
 5. `security.rb` - Security headers & rate limiting
 6. `pagination.rb` - Pagy pagination
 7. `friendly_urls.rb` - SEO-friendly URLs with FriendlyId
-8. `admin.rb` - Admin dashboard with ActiveAdmin
+8. `admin.rb` - Admin dashboard with ActiveAdmin (Only works with Devise versions below v5.0. When using templates, only use with Devise v4.9)
 9. `devise.rb` - User authentication with Devise
 10. `authentication.rb` - Native Rails user authentication (Only works with Rails 8 templates)
 11. `bootstrap.rb` - Bootstrap (Only works with Rails 7 and 8 `custom.rb` template)
