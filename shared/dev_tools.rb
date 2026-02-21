@@ -157,18 +157,18 @@ if system("bundle exec rails console --help > /dev/null 2>&1") && system("bundle
   say "`rails console` now uses Pry.", :green
 
   # Optional: Add Pry config to `.pryrc` (common aliases)
-  unless File.exist?(".pryrc")
-    create_file ".pryrc", <<~PRYRC
-      # Pry aliases for easier debugging.
-      alias s step
-      alias n next
-      alias c continue
-      alias ls ls -M
-      alias wt whereis
-    PRYRC
+  # unless File.exist?(".pryrc")
+  #   create_file ".pryrc", <<~PRYRC
+  #     # Pry aliases for easier debugging.
+  #     alias s step
+  #     alias n next
+  #     alias c continue
+  #     alias ls "ls -M"
+  #     alias wt whereis
+  #   PRYRC
 
-    say "Created `.pryrc` with useful Pry aliases.", :green
-  end
+  #   say "Created `.pryrc` with useful Pry aliases.", :green
+  # end
 else
   say "Pry gems not yet available (run `bundle install` first). Skipping Pry config.", :yellow
 end
@@ -190,11 +190,11 @@ if system("bundle exec ruby -e \"require 'awesome_print'; puts 'OK'\" > /dev/nul
     # ap {a: {b: [1,2]}} # Nested hashes expanded with awesome print
   say "Awesome Print available. Use `ap <obj>` instead of `puts <obj>` for pretty printing and debugging!", :green
 
-  # Optional: Pry integration (auto-loads `ap` (awesome_print) in console)
-  if File.exist?(".pryrc")
-    append_file ".pryrc", "\n# Auto-load Awesome Print\nAwesomePrint.irb!"
-    say "Added Awesome Print to Pry config.", :green
-  end
+  # Optional: Pry integration - auto-loads `ap` (awesome_print) in console.
+  # if File.exist?(".pryrc")
+  #   append_file ".pryrc", "\n# Auto-load Awesome Print\nAwesomePrint.irb!"
+  #   say "Added Awesome Print to Pry config.", :green
+  # end
 
 else
   say "Awesome Print not available yet (`bundle install` first). Skipping.", :yellow
