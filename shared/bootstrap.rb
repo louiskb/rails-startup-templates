@@ -10,7 +10,7 @@ end
 # STANDALONE SUPPORT: Add gems if missing (existing apps only)
 gemfile = File.read("Gemfile")
 
-unless gemfile.include?('gem "bootstrap"')
+unless gemfile.match?(/^gem.*['"]bootstrap['"]/)
   say "Adding Bootstrap gems...", :blue
 
   # Core Bootstrap gems
