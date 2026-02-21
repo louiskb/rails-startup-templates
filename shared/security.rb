@@ -38,7 +38,7 @@ unless gemfile.match?(/^gem.*['"]rack-attack['"]/)
   inject_into_file "Gemfile", before: "group :development do\n" do
     <<~RUBY
       gem "rack-attack"
-      
+
     RUBY
   end
 
@@ -56,17 +56,23 @@ unless File.exist?("config/initializers/secure_headers.rb")
   # `create_file` works similarly to `file` method.
   create_file "config/initializers/secure_headers.rb", <<~RUBY
     SecureHeaders::Configuration.default do |config|
-      config.csp.build(:default_src => :self)
-      config.hsts = {
-        override: true,
-        include_subdomains: true,
-        max_age: 31_556_926 # 1 year (in seconds)
+      config.csp = {
+        default_src: %w['self'],
+        style_src: %w['self' 'unsafe-inline'],
+        script_src: %w['self'],
+        img_src: %w['self' data:],
+        font_src: %w['self' data:],
+        connect_src: %w['self'],
+        frame_ancestors: %w['none']
       }
-      config.x_frame_options = :DENY
-      config.x_content_type_options = :nosniff
-      config.x_xss_protection = { value: '1; mode=block' }
-      config.x_permitted_cross_domain_policies = :none
-      config.referrer_policy = :strict_origin_when_cross_origin
+
+       config.hsts = "max-age=31556926; includeSubDomains; preload"
+
+      config.x_frame_options = "DENY"
+      config.x_content_type_options = "nosniff"
+      config.x_xss_protection = "1; mode=block"
+      config.x_permitted_cross_domain_policies = "none"
+      config.referrer_policy = "strict-origin-when-cross-origin"
     end
   RUBY
 
@@ -97,7 +103,7 @@ unless File.exist?("config/initializers/rack_attack.rb")
     end
 
     # Block obvious bad bots
-    Rack::Attack.blacklist("bad bots") do |req|
+    Rack::Attack.blocklist("bad bots") do |req|
       Rack::Attack::Request.new(req).user_agent.to_s.downcase.match?(/\b(ahrefs|semrush|mj12bot)\b/i)
     end
   end
