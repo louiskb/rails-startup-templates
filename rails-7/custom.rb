@@ -27,6 +27,14 @@ def source_path(file)
   end
 end
 
+# Add simple_form gem
+inject_into_file "Gemfile", before: "group :development, :test do" do
+  <<~RUBY
+    gem "simple_form", github: "heartcombo/simple_form"
+
+  RUBY
+end
+
 # Gemfile - dotenv only (no CSS gems here)
 inject_into_file "Gemfile", after: "group :development, :test do" do
   "\n  gem \"dotenv-rails\""
@@ -95,7 +103,6 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
           gem "bootstrap", "~> 5.3"
           gem "autoprefixer-rails"
           gem "font-awesome-sass", "~> 6.1"
-          gem "simple_form", github: "heartcombo/simple_form"
           gem "sassc-rails"
 
         RUBY
@@ -111,7 +118,6 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
     inject_into_file "Gemfile", before: "group :development, :test do" do
       <<~RUBY
         gem "tailwindcss-rails"
-        gem "simple_form", github: "heartcombo/simple_form"
 
       RUBY
     end
@@ -308,7 +314,7 @@ after_bundle do
   environment mailer_development, env: "development"
   environment mailer_production, env: "production"
 
- # Heroku
+  # Heroku
   run "bundle lock --add-platform x86_64-linux"
 
   # Dotenv
