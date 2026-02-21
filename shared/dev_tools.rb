@@ -58,7 +58,7 @@ unless gemfile.match?(/^gem.*['"]rubocop['"]/)
     <<~RUBY
       gem "rubocop", require: false
       gem "rubocop-rails", require: false
-      
+
     RUBY
   end
 
@@ -112,7 +112,7 @@ unless File.exist?("config/initializers/annotate.rb")
   if system("bundle exec annotate --help > /dev/null 2>&1")
     say "Running `annotate --install` to create initializer and default config...", :blue
 
-    run "bundle exec annotate --install"
+    generate "annotate:install"
   else
     say "Annotate gem not available (bundle exec annotate failed). Skipping annotate install.", :yellow
   end
@@ -133,16 +133,17 @@ end
 if File.exist?("config/environments/development.rb") && !File.read("config/environments/development.rb").include?("BetterErrors")
   # Non-invasive comment to remind you it's installed.
   inject_into_file "config/environments/development.rb",
-  after: "Rails.application.configure do\n",
-  text: <<~RUBY
+  after: "Rails.application.configure do\n" do
+    <<~RUBY
 
-  # Better Errors is enabled by `rails-startup-templates/shared/devtools.rb` (only in development).
-  # Configure allowed IPs if you use Docker / VMs:
-  # if defined?(BetterErrors)
-  #   BetterErrors::Middleware.allow_ip! '0.0.0.0/0'
-  # end
+    # Better Errors is enabled by `rails-startup-templates/shared/devtools.rb` (only in development).
+    # Configure allowed IPs if you use Docker / VMs:
+    # if defined?(BetterErrors)
+    #   BetterErrors::Middleware.allow_ip! '0.0.0.0/0'
+    # end
 
-  RUBY
+    RUBY
+  end
 
   say "Added Better Errors comment block to `config/environments/development.rb`.", :green
 end
@@ -153,7 +154,7 @@ end
 # Test if Pry is available.
 if system("bundle exec rails console --help > /dev/null 2>&1") && system("bundle exec pry --help > /dev/null 2>&1")
 
-  say "Pry gems available. `rails console` now uses Pry.", :green
+  say "`rails console` now uses Pry.", :green
 
   # Optional: Add Pry config to `.pryrc` (common aliases)
   unless File.exist?(".pryrc")
