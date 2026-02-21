@@ -52,7 +52,7 @@ gsub_file(
   '<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">'
 )
 
-# Flashes
+# Flashes (Tailwind)
 # The standard "X" close icon from Heroicons https://heroicons.com/ (Tailwind Labs' official icon set).
 file "app/views/shared/_flashes.html.erb", <<~HTML
   <% if notice %>
@@ -181,7 +181,7 @@ if should_install?("friendly_urls", "Install Friendly URLs (FriendlyId)? (y/n)")
 end
 
 # image_upload_cloudinary
-if should_install?("image_uploading_cloudinary", "Install image uploading with Cloudinary? (y/n)")
+if should_install?("image_upload_cloudinary", "Install image uploading with Cloudinary? (y/n)")
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "cloudinary"

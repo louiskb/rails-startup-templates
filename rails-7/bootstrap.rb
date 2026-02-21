@@ -95,7 +95,7 @@ gsub_file(
   'stylesheet_link_tag "application"'
 )
 
-# Flashes
+# Flashes (Bootstrap)
 file "app/views/shared/_flashes.html.erb", <<~HTML
   <% if notice %>
     <div class="alert alert-info alert-dismissible fade show m-1" role="alert">
@@ -228,7 +228,7 @@ if should_install?("friendly_urls", "Install Friendly URLs (FriendlyId)? (y/n)")
 end
 
 # image_upload_cloudinary
-if should_install?("image_uploading_cloudinary", "Install image uploading with Cloudinary? (y/n)")
+if should_install?("image_upload_cloudinary", "Install image uploading with Cloudinary? (y/n)")
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
@@ -265,7 +265,7 @@ if should_install?("ruby_llm", "Install ruby_llm? (y/n)")
 end
 
 # security
-if should_install?("serurity", "Install security? (y/n)")
+if should_install?("security", "Install security? (y/n)")
   inject_into_file "Gemfile", before: "group :development do\n" do
     <<~RUBY
       gem "secure_headers"

@@ -70,9 +70,10 @@ inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
 end
 
 # README
-file "README.md", <<~MARKDOWN
+markdown_readme_content = <<~MARKDOWN
   Rails app generated with [louiskb/rails-startup-templates](https://github.com/louiskb/rails-startup-templates), created by [Louis Bourne](https://louisbourne.me).
 MARKDOWN
+file "README.md", markdown_readme_content, force: true
 
 # Generators
 environment <<~RUBY
@@ -228,7 +229,7 @@ if should_install?("friendly_urls", "Install Friendly URLs (FriendlyId)? (y/n)")
 end
 
 # image_upload_cloudinary
-if should_install?("image_uploading_cloudinary", "Install image uploading with Cloudinary? (y/n)")
+if should_install?("image_upload_cloudinary", "Install image uploading with Cloudinary? (y/n)")
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "cloudinary"
