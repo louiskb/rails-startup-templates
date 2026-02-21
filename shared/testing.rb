@@ -78,7 +78,8 @@ end
 unless File.exist?("spec/spec_helper.rb")
   say "Running `rails generate rspec:install`...", :blue
   if system("bundle exec rails generate rspec:install --help > /dev/null 2>&1")
-    run "bundle exec rails generate rspec:install"
+    # `bundle exec rails generate rspec:install, verbose: true`, shows exactly what's happening (with `verbose: true`) like creating files such as `create spec/spec_helper.rb`, `create spec/rails_helper.rb`, etc.
+    run "bundle exec rails generate rspec:install", verbose: true
   else
     say "RSpec generator unavailable. Run `bundle install` first.", :yellow
   end
