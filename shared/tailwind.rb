@@ -11,7 +11,7 @@ end
 gemfile = File.read("Gemfile")
 
 unless gemfile.include?('gem "tailwindcss-rails"')
-  say "Adding Tailwind gem...", :blue
+  say "Adding Tailwind gem...", :cyan
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
@@ -68,7 +68,7 @@ in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || 
 if in_main_template
   say "Main template detected → skipping migrations", :yellow
 else
-  say "Standalone mode → executing db:migrate...", :blue
+  say "Standalone mode → executing db:migrate...", :cyan
   rails_command "db:migrate"
 end
 

@@ -21,7 +21,7 @@ end
 gems_added = false
 
 unless gemfile.match?(/^gem.*['"]secure_headers['"]/)
-  say "Adding `secure_headers` gem...", :blue
+  say "Adding `secure_headers` gem...", :cyan
 
   inject_into_file "Gemfile", before: "group :development do\n" do
     <<~RUBY
@@ -34,7 +34,7 @@ unless gemfile.match?(/^gem.*['"]secure_headers['"]/)
 end
 
 unless gemfile.match?(/^gem.*['"]rack-attack['"]/)
-  say "Adding rack-attack (rate limiting)...", :blue
+  say "Adding rack-attack (rate limiting)...", :cyan
   inject_into_file "Gemfile", before: "group :development do\n" do
     <<~RUBY
       gem "rack-attack"
@@ -52,7 +52,7 @@ end
 # `secure_headers` config
 # Security Headers (automatic on every response): CSP → blocks XSS, HSTS → HTTPS only, X-Frame-Options → no clickjacking, no MIME sniffing.
 unless File.exist?("config/initializers/secure_headers.rb")
-  say "Creating `secure_headers` initializer...", :blue
+  say "Creating `secure_headers` initializer...", :cyan
   # `create_file` works similarly to `file` method.
   create_file "config/initializers/secure_headers.rb", <<~RUBY
     SecureHeaders::Configuration.default do |config|
@@ -88,7 +88,7 @@ end
 # `rack-attack` (rate limiting)
 # Rate limiting: 5 login attempts/minute/IP, 100 API calls/minute/IP, blocks bad bots.
 unless File.exist?("config/initializers/rack_attack.rb")
-  say "Creating rack-attack rate limiting...", :blue
+  say "Creating rack-attack rate limiting...", :cyan
 
   create_file "config/initializers/rack_attack.rb", <<-RUBY
   class Rack::Attack
@@ -127,7 +127,7 @@ in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || 
 if in_main_template
   say "Main template detected → skipping migrations", :yellow
 else
-  say "Standalone mode → executing db:migrate...", :blue
+  say "Standalone mode → executing db:migrate...", :cyan
   rails_command "db:migrate"
 end
 

@@ -18,7 +18,7 @@ end
 # Inside conditional, once gem added to `Gemfile`, run `bundle install` if not already executed.
 # Fresh apps: main template already added gem → this skips.
 unless gemfile.match?(/^gem.*['"]pagy['"]/)
-  say "Adding pagy gem...", :blue
+  say "Adding pagy gem...", :cyan
 
   inject_into_file "Gemfile", before: "group :development, :test do\n" do
     <<~RUBY
@@ -30,41 +30,54 @@ unless gemfile.match?(/^gem.*['"]pagy['"]/)
   run "bundle install" unless system("bundle check")
 end
 
-# Create initializer (Pagy's only "setup")
+# Create `pagy.rb` initializer - Configure global options and special features. No generator needed.
 unless File.exist?("config/initializers/pagy.rb")
+  run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/config/pagy.rb > config/initializers/pagy.rb"
 
-  if File.read("Gemfile").match?(/^gem.*['"]bootstrap['"]/)
-    file "config/initializers/pagy.rb", <<~RUBY
-      # Pagy INITIALIZER (no generator needed)
-      require "pagy/extras/bootstrap" # Bootstrap nav
-      require "pagy/extras/arel" # Optional: better SQL
-      Pagy::DEFAULT[:items] = 10 # Items per page
-    RUBY
-    say "Pagy initializer created for Bootstrap in mind.", :green
-  else
-    file "config/initializers/pagy.rb", <<~RUBY
-      # Pagy INITIALIZER (no generator needed)
-      require "pagy/extras/arel" # # Optional: better SQL
-      Pagy::DEFAULT[:items] = 10 # Items per page
-    RUBY
-    say "Pagy initializer created.", :green
-  end
-
+  say "Added `pagy.rb` initializer.", :green
 end
 
-# Docs = https://github.com/ddnexus/pagy?tab=readme-ov-file
+# Integrate the Stylesheets (CSS or Tailwind) into Rails app for native Pagy helpers. No additional CSS file is needed for Bootstrap.
+if !gemfile.match?(/^gem.*['"]tailwindcss-rails['"]/) && !gemfile.match?(/^gem.*['"]bootstrap['"]/)
+  run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy.css > app/assets/stylesheets/pagy.css"
+
+  inject_into_file "app/assets/stylesheets/pagy.css", before: ".pagy {" do
+    <<~CSS
+      /* For reference: `stylesheet_path = Pagy::ROOT.join('stylesheets/pagy.css')`\n */
+    CSS
+  end
+
+  say "Added `pagy.css` stylesheet.", :green
+elsif gemfile.match?(/^gem.*['"]tailwindcss-rails['"]/)
+  run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy-tailwind.css > app/assets/stylesheets/pagy-tailwind.css"
+
+  inject_into_file "app/assets/stylesheets/pagy-tailwind.css", before: "@tailwind base;" do
+    <<~CSS
+      /* For reference: `stylesheet_path = Pagy::ROOT.join('stylesheets/pagy-tailwind.css')`\n */
+    CSS
+  end
+
+  say "Added `pagy-tailwind.css` stylesheet.", :green
+end
+
+# Docs GitHub = https://github.com/ddnexus/pagy?tab=readme-ov-file
+# Docs Pagy = https://ddnexus.github.io/pagy/guides/quick-start/
+# Docs Pagy Stylesheets (CSS or Tailwind) = https://ddnexus.github.io/pagy/resources/stylesheets/
 #
 # Usage in controllers:
-# `app/controllers/your_controller.rb`
-# include Pagy::Backend  # Backend pagination logic
 #
+# Include the pagy method where you are going to use it (usually `app/controllers/ApplicationController`):
+# include Pagy::Method
+#
+# `app/controllers/your_controller.rb`
 # def index
 #   @pagy, @records = pagy(YourModel.all, items: 10)
 # end
 #
 # Usage in views:
+#
 # <!-- Views -->
-# <%= pagy_nav(@pagy) %>  <!-- Navigation -->
+# <%== @pagy.series_nav %>  <!-- Navigation -->
 # <% @records.each do |record| %>
 #   <%= record.name %>
 # <% end %>
@@ -77,7 +90,7 @@ in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || 
 if in_main_template
   say "Main template detected → skipping migrations", :yellow
 else
-  say "Standalone mode → executing db:migrate...", :blue
+  say "Standalone mode → executing db:migrate...", :cyan
   rails_command "db:migrate"
 end
 

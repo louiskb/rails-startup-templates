@@ -19,11 +19,11 @@ end
 # Inside conditional, once gem added to `Gemfile`, run `bundle install` if not already executed.
 # Fresh apps: main template already added gem → this skips.
 unless gemfile.match?(/^gem.*['"]friendly_id['"]/)
-  say "Adding `friendly_id` gem...", :blue
+  say "Adding `friendly_id` gem...", :cyan
   inject_into_file "Gemfile", before: "group :development, :test do\n" do
     <<~RUBY
       gem "friendly_id"
-      
+
     RUBY
   end
 
@@ -40,7 +40,7 @@ end
 #
 # Check if User model exists before continuing.
 if File.exist?("app/models/user.rb") && !File.read("app/models/user.rb").include?("extend FriendlyId")
-  say "Adding FriendlyId to User model (uses :slug column)...", :blue
+  say "Adding FriendlyId to User model (uses :slug column)...", :cyan
 
   inject_into_file "app/models/user.rb", after: "class User < ApplicationRecord\n" do
     <<~RUBY
@@ -96,7 +96,7 @@ in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || 
 if in_main_template
   say "Main template detected → skipping migrations", :yellow
 else
-  say "Standalone mode → executing db:migrate...", :blue
+  say "Standalone mode → executing db:migrate...", :cyan
   rails_command "db:migrate"
 end
 

@@ -24,12 +24,12 @@ end
 # `.match?` with regex works for files with multi-line code.
 gemfile = File.read("Gemfile")
 if !gemfile.match?(/^gem.*['"]cloudinary['"]/)
-  say "Adding Cloudinary gem to Gemfile...", :blue
+  say "Adding Cloudinary gem to Gemfile...", :cyan
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "cloudinary"
-      
+
     RUBY
   end
 
@@ -84,7 +84,7 @@ in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || 
 if in_main_template
   say "Main template detected → skipping migrations", :yellow
 else
-  say "Standalone mode → executing db:migrate...", :blue
+  say "Standalone mode → executing db:migrate...", :cyan
   rails_command "db:migrate"
 end
 

@@ -98,7 +98,7 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
   case css_choice
   when "b"
     if should_install?("bootstrap", "Install Bootstrap? (y/n)")
-      say "Bootstrap installing...", :blue
+      say "Bootstrap installing...", :cyan
       # Core Bootstrap gems
       inject_into_file "Gemfile", before: "group :development, :test do" do
         <<~RUBY
@@ -116,7 +116,7 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
     gsub_file("Gemfile", /^gem "propshaft".*\n/, "")
 
   when "t"
-    say "Tailwind installing...", :blue
+    say "Tailwind installing...", :cyan
     # Tailwind gem
     inject_into_file "Gemfile", before: "group :development, :test do" do
       <<~RUBY
@@ -130,7 +130,18 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
   end
 end
 
-# Authentication choice
+# Default to Devise v4.9 if `DEVISE=true` (ENV variable set in shell functions) (non-interactive).
+if ENV.fetch("DEVISE", "") == "true"
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "devise", "~> 4.9"
+
+    RUBY
+  end
+  say("`DEVISE=true` detected: Installing Devise v4.9 for Active Admin compatibility.", :green)
+end
+
+# Authentication choice (first interactive prompt)
 if should_install?("auth", "Install authentication? (y/n)")
 
   auth_choice = ask("Choose authentication? (d = devise, r = rails 8 native, n = none)", limited_to: %w[d r n]).downcase
@@ -141,39 +152,28 @@ if should_install?("auth", "Install authentication? (y/n)")
     # devise
     if should_install?("devise", "Install Devise? (y/n)")
       # Add devise gem to Gemfile (before `bundle install`)
-      # Note the blank line inside the heredoc to keep "Gemfile" formatting clean.
 
-      # Default to Devise v4.9 if `DEVISE=true` (ENV variable set in shell functions) (non-interactive).
-      if ENV.fetch("DEVISE", "") == "true"
-        inject_into_file "Gemfile", before: "group :development, :test do" do
-          <<~RUBY
-            gem "devise", "~> 4.9"
+      # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
+      devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
 
-          RUBY
-        end
-        say("`DEVISE=true` detected: Installing Devise v4.9 for Active Admin compatibility.", :green)
+      gem_line = if devise_choice == "y"
+        'gem "devise", "~> 4.9"'
       else
-        # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
-        devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
-
-        gem_line = if devise_choice == "y"
-          'gem "devise", "~> 4.9"'
-        else
-          'gem "devise"'
-        end
-
-        inject_into_file "Gemfile", before: "group :development, :test do" do
-          <<~RUBY
-            #{gem_line}
-
-          RUBY
-        end
-
-        say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
+        'gem "devise"'
       end
+
+      # Note the blank line inside the heredoc to keep "Gemfile" formatting clean.
+      inject_into_file "Gemfile", before: "group :development, :test do" do
+        <<~RUBY
+          #{gem_line}
+
+        RUBY
+      end
+
+      say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
     end
   when "r"
-    say "Rails 8 native Authentication installing...", :blue
+    say "Rails 8 native Authentication installing...", :cyan
 
     # Rails 8 native `authentication` does not have a gem.
     # Create a `.txt` file to use later inside `after_bundle` as reference to `apply source_path(shared/authentication.rb)`.
@@ -228,6 +228,19 @@ if should_install?("friendly_urls", "Install Friendly URLs (FriendlyId)? (y/n)")
   end
 end
 
+# testing
+if should_install?("testing", "Install testing? (y/n)")
+  inject_into_file "Gemfile", after: "group :development, :test do\n" do
+    <<~RUBY
+      gem "rspec-rails"
+      gem "factory_bot_rails"
+      gem "faker"
+      gem "shoulda-matchers"
+
+    RUBY
+  end
+end
+
 # image_upload_cloudinary
 if should_install?("image_upload_cloudinary", "Install image uploading with Cloudinary? (y/n)")
   inject_into_file "Gemfile", before: "group :development, :test do" do
@@ -276,20 +289,8 @@ if should_install?("security", "Install security? (y/n)")
   end
 end
 
-# testing
-if should_install?("testing", "Install testing? (y/n)")
-  inject_into_file "Gemfile", after: "group :development, :test do\n" do
-    <<~RUBY
-      gem "rspec-rails"
-      gem "factory_bot_rails"
-      gem "faker"
-      gem "shoulda-matchers"
-
-    RUBY
-  end
-end
-
 # STEP 3: after_bundle (same structure)
+
 after_bundle do
   # Generators: db + pages controller (Simple Form already done by CSS shared templates)
   rails_command "db:drop db:create db:migrate"
@@ -419,6 +420,15 @@ after_bundle do
     git commit: "-m 'feat: install friendly id.'"
   end
 
+  # shared/testing.rb
+  if gemfile.include?('gem "rspec-rails"')
+    apply source_path("shared/testing.rb")
+
+    # Git
+    git add: "."
+    git commit: "-m 'feat: install testing.'"
+  end
+
   # shared/image_upload_cloudinary.rb
   if gemfile.include?('gem "cloudinary"')
     apply source_path("shared/image_upload_cloudinary.rb")
@@ -465,15 +475,6 @@ after_bundle do
     git commit: "-m 'feat: install security.'"
   end
 
-  # shared/testing.rb
-  if gemfile.include?('gem "rspec-rails"')
-    apply source_path("shared/testing.rb")
-
-    # Git
-    git add: "."
-    git commit: "-m 'feat: install testing.'"
-  end
-
   # Run all migrations towards the end of `after_bundle`.
   rails_command "db:migrate db:seed"
 
@@ -481,7 +482,7 @@ after_bundle do
   git add: "."
   git commit: "-m 'feat: add migration after initial setup.'"
 
-  say "✅ Rails 8 Custom template installation complete!", :green
+  say "✅ Rails 8 Custom template installation complete! 🚀🔥", :green
 end
 
 

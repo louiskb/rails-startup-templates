@@ -16,12 +16,12 @@ end
 # Fresh apps: main template already added gem → this skips.
 gemfile = File.read("Gemfile")
 if !gemfile.include?('gem "ruby_llm"') && !gemfile.include?("gem 'ruby_llm'")
-  say "Adding ruby_llm gem to Gemfile...", :blue
+  say "Adding ruby_llm gem to Gemfile...", :cyan
 
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
       gem "ruby_llm"
-      
+
     RUBY
   end
 

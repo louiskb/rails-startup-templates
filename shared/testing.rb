@@ -24,7 +24,7 @@ end
 gems_added = false
 
 unless gemfile.match?(/^gem.*['"]rspec-rails['"]/)
-  say "Adding `rspec-rails`...", :blue
+  say "Adding `rspec-rails`...", :cyan
   inject_into_file "Gemfile", after: "group :development, :test do\n" do
     <<~RUBY
       gem "rspec-rails"
@@ -36,7 +36,7 @@ unless gemfile.match?(/^gem.*['"]rspec-rails['"]/)
 end
 
 unless gemfile.match?(/^gem.*['"]factory_bot_rails['"]/)
-  say "Adding `factory_bot_rails`...", :blue
+  say "Adding `factory_bot_rails`...", :cyan
   inject_into_file "Gemfile", after: "group :development, :test do\n" do
     <<~RUBY
       gem "factory_bot_rails"
@@ -48,7 +48,7 @@ unless gemfile.match?(/^gem.*['"]factory_bot_rails['"]/)
 end
 
 unless gemfile.match?(/^gem.*['"]faker['"]/)
-  say "Adding `faker`...", :blue
+  say "Adding `faker`...", :cyan
   inject_into_file "Gemfile", after: "group :development, :test do\n" do
     <<~RUBY
       gem "faker"
@@ -76,7 +76,7 @@ end
 
 # RSpec install
 unless File.exist?("spec/spec_helper.rb")
-  say "Running `rails generate rspec:install`...", :blue
+  say "Running `rails generate rspec:install`...", :cyan
   if system("bundle exec rails generate rspec:install --help > /dev/null 2>&1")
     # `bundle exec rails generate rspec:install, verbose: true`, shows exactly what's happening (with `verbose: true`) like creating files such as `create spec/spec_helper.rb`, `create spec/rails_helper.rb`, etc.
     run "bundle exec rails generate rspec:install", verbose: true
@@ -89,7 +89,7 @@ end
 
 # Custom RSpec config
 if File.exist?("spec/spec_helper.rb")
-  say "Customizing RSpec config...", :blue
+  say "Customizing RSpec config...", :cyan
 
   # FactoryBot in Rails + Shoulda Matchers (optional) config.
   # Shoulda Matchers are a Ruby gem that provides simple, one-line RSpec tests for common Rails behaviors like model validations, associations, and callbacks—they complement FactoryBot perfectly by letting you test those models you create with factories.
@@ -112,7 +112,7 @@ if File.exist?("spec/spec_helper.rb")
 end
 
 # Shoulda Matchers full config
-say "Configuring Shoulda Matchers...", :blue
+say "Configuring Shoulda Matchers...", :cyan
 run "mkdir -p spec/support"
 create_file "spec/support/shoulda_matchers.rb", <<~RUBY
   # Shoulda Matchers
@@ -140,11 +140,18 @@ append_file "spec/rails_helper.rb", <<~RUBY
 RUBY
 
 # Example Factory (User)
-unless Dir["spec/factories/*.rb"].any?
-  say "Creating example User factory", :blue
+#
+#
+# unless Dir["spec/factories/*.rb"].any?
+  # say "Creating example User factory", :cyan
+  #
+  #
   # `mkdir -p`: `mkdir` creates a new directory (folder), `-p` creates parent directories as needed and ensures the full path is built recursively e.g., creates `spec` first if missing, then `spec/factories.rb` and returns silently on success.
-  run "mkdir -p spec/factories"
-
+  #
+  #
+  # run "mkdir -p spec/factories"
+  #
+  #
   # `create_file` == (same as) `file` method.
   # `SecureRandom.hex(4)` generates unique 8-char hexadecimal strings (e.g. `a1b2c3d4@example.com`), ensuring FactoryBot creates distinct emails without needing `sequence` (e.g. `sequence(:email) { |n| "user#{n}@example.com" }`).
   # `SecureRandom.hex(4)` generates unique random values each time, never the same chars twice.
@@ -171,32 +178,96 @@ unless Dir["spec/factories/*.rb"].any?
       # `user.email = email_proc[""]`   # => "e5f6g7h8@example.com" (fresh!). [""] = empty strings for argument. If Proc uses args this is where it is added e.g. `name_proc = proc { |name| "#{name}@example.com" }` call later with `name_proc["bob"]` # => "bob@example.com"
     # Why fresh? Proc re-runs SecureRandom each call → always unique emails.
     # Static would repeat same hex forever.
-  create_file "spec/factories/users.rb", <<~RUBY
+    #
+    #
+  # create_file "spec/factories/users.rb", <<~RUBY
+  #   FactoryBot.define do
+  #     factory :user do
+  #       email { "user_#{SecureRandom.hex(4)}@example.com" }
+  #       password { "password123"}
+  #       password_confirmation { "password123" }
+  #       slug {nil} # Ensures `FactoryBot.create(:user)` generates slug post-save.
+  #     end
+  #   end
+  # RUBY
+  #
+  #
+# end
+
+# Create example model Spec for User
+# unless File.exist?("spec/models/user_spec.rb")
+#   say "Creating example User model spec", :cyan
+#   run "mkdir -p spec/models"
+#   create_file "spec/models/user_spec.rb", <<~RUBY
+#     require "rails_helper"
+
+#     RSpec.describe User, type: :model do
+#       it "has a valid factory" do
+#         user = FactoryBot.build(:user)
+#         expect(user.valid?).to eq(true)
+#       end
+
+#       it { should validate_presence_of(:email) }
+#       it { should validate_uniqueness_of(:email).case_insensitive }
+#     end
+#   RUBY
+# end
+
+# Example Factory (Post)
+unless Dir["spec/factories/*.rb"].any?
+  say "Creating example Post factory", :cyan
+
+  run "mkdir -p spec/factories"
+
+  create_file "spec/factories/posts.rb", <<~RUBY
     FactoryBot.define do
-      factory :user do
-        email { "user_#{SecureRandom.hex(4)}@example.com" }
-        password { "password123"}
-        password_confirmation { "password123" }
+      factory :post do
+        title { "My First #{SecureRandom.hex(2).capitalize} Post"}
+        content { "This is a sample post. Animi vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum " }
+        slug { nil }
+        # Common fields for blog/demo apps - works even without Post model.
       end
     end
   RUBY
 end
 
-# Create example (model) Spec
-unless File.exist?("spec/models/user_spec.rb")
-  say "Creating example User model spec", :blue
+# Create example model Spec for Post
+unless File.exist?("spec/models/post_spec.rb")
+  say "Creating example Post model spec", :cyan
   run "mkdir -p spec/models"
-  create_file "spec/models/user_spec.rb", <<~RUBY
+  create_file "spec/models/post_spec.rb", <<~RUBY
     require "rails_helper"
 
     RSpec.describe User, type: :model do
       it "has a valid factory" do
-        user = FactoryBot.build(:user)
+        post = FactoryBot.build(:post)
         expect(user.valid?).to eq(true)
       end
 
-      it { should validate_presence_of(:email) }
-      it { should validate_uniqueness_of(:email).case_insensitive }
+      it { should validate_presence_of(:title) }
+      it { should validate_uniqueness_of(:title).case_insensitive }
+  RUBY
+end
+
+
+unless Dir["spec/system/pages_spec.rb"].any?
+  say "Creating example PagesController system spec", :cyan
+  run "mkdir -p spec/system"
+  file "spec/system/pages_spec.rb", <<~RUBY
+    require "rails_helper"
+
+    RSpec.describe "Pages", type: :system do
+      before do
+        driven_by(:rack_test)
+      end
+
+      describe "home page" do
+        it "loads successfully" do
+          visit root_path
+          expect(page).to have_content("Welcome") # Matches your Pages#home
+          expect(page.status_code).to eq 200
+        end
+      end
     end
   RUBY
 end
@@ -298,7 +369,7 @@ in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || 
 if in_main_template
   say "Main template detected → skipping migrations", :yellow
 else
-  say "Standalone mode → executing db:migrate...", :blue
+  say "Standalone mode → executing db:migrate...", :cyan
   rails_command "db:migrate"
 end
 

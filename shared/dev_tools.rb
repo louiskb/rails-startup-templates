@@ -92,7 +92,7 @@ end
 
 # Run `bundle install` if any gems were added in standalone mode.
 if missing_gems.any?
-  say "Installing devtools gems (#{missing_gems.join(', ')})...", :blue
+  say "Installing devtools gems (#{missing_gems.join(', ')})...", :cyan
   run "bundle install" unless system("bundle check")
 else
   say "Devtools gems already present, skipping `bundle install`.", :green
@@ -110,7 +110,7 @@ unless File.exist?("config/initializers/annotate.rb")
   # `system()` runs shell command and returns `true` if exit code is 0 (success). Returns `false` if exit code is not 0 (failure).
   # ** In summary, (1) if `annotate` is not installed then `bundle exec annotate --help` won't work, and (2) `> /dev/null 2>&1` is a way to silence extra text from `--help` and any errors. **
   if system("bundle exec annotate --help > /dev/null 2>&1")
-    say "Running `annotate --install` to create initializer and default config...", :blue
+    say "Running `annotate --install` to create initializer and default config...", :cyan
 
     generate "annotate:install"
   else
@@ -122,7 +122,7 @@ end
 
 # 2. Rubocop Setup
 unless File.exist?(".rubocop.yml")
-  say "No `.rubocop.yml` found. Downloading a sensible default config...", :blue
+  say "No `.rubocop.yml` found. Downloading a sensible default config...", :cyan
   run "curl -L https://raw.githubusercontent.com/lewagon/rails-templates/master/.rubocop.yml -o .rubocop.yml"
 else
   say "`.rubocop.yml` already present, leaving it unchanged.", :yellow
@@ -208,7 +208,7 @@ in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || 
 if in_main_template
   say "Main template detected → skipping migrations", :yellow
 else
-  say "Standalone mode → executing db:migrate...", :blue
+  say "Standalone mode → executing db:migrate...", :cyan
   rails_command "db:migrate"
 end
 
