@@ -1,6 +1,12 @@
 # shared/devise.rb
 # Shared Devise Template
 
+# TODO after Devise added to project:
+# 1) Configure Mailer in Rails app and Devise.
+# 2) Adding optional attributes to User e.g. `first_name` and `last_name` inside `app/controllers/application_controller.rb` with ability to create new and edit (see docs = `https://github.com/heartcombo/devise#strong-parameters`).
+# 3) Add Login and Logout to navbar and views. Configure `app/views/layouts/application.html.erb` and `app/views/shared/_navbar.html.erb`
+# 4) Add alerts/flashes to views `app/views/layouts/application.html.erb` and (optional) `app/views/shared/_flashes.html.erb`.
+
 # TWO USE CASES:
 # 1. Fresh app: called from main template INSIDE `after_bundle` (gems already added/bundles by main template).
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/devise.rb`).

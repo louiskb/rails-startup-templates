@@ -46,6 +46,8 @@ if File.exist?("app/models/user.rb") && !File.read("app/models/user.rb").include
     <<~RUBY
       extend FriendlyId
       friendly_id :email, use: :slugged # Use email as slug (unique)
+
+
     RUBY
   end
 
