@@ -63,8 +63,7 @@ end
 # ApplicationController: Add optional global auth
 inject_into_file "app/controllers/application_controller.rb", after: "class ApplicationController < ActionController::Base\n" do
   <<~RUBY
-    # Uncomment the line below so that login is required on ALL pages:
-    # before_action :authenticate_user!
+    before_action :authenticate_user!
   RUBY
 end
 
