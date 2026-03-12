@@ -1,6 +1,14 @@
 # shared/active_storage.rb
 # Shared Image Upload with Cloudinary Template
 
+# TODO after Active Storage and Cloudinary is added to project:
+# 1) Add in the model(s) `has_one_attached :photo` of `has_many_attached :photos`.
+# 2) Add single (photo) `:photo` or add many (photos) `photos: []` to strong params in controller.
+# 3) Add image uploader to views in `simple_form` `<%= f.input :photo, as: :file %>` (single images) or `<%= f.input :photos, as: :file, input_html: { multiple: true } %>` (multiple images)
+# 4) Display the image in the view `<%= cl_image_tag @article.photo.key, height: 300, width: 500, crop: :fill %>` or iterate with .each over the photos if many images <% @article.photos.each do |photo| %> <%= cl_image_tag photo.key, height: 300, width: 400, crop: :fill %><% end %>`
+# 5) Set your CLOUDINARY_URL ENV var in development.
+# 6) Set you CLOUDINARY_URL ENV var in production to Heroku: run `heroku config:set CLOUDINARY_URL=cloudinary://166...`. Check with `heroku config`.
+
 # TWO USE CASES:
 # 1. Fresh app: called from main template INSIDE `after_bundle` (gems already added/bundles by main template).
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/image_upload_cloudinary.rb`).
