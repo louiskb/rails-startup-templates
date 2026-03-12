@@ -292,8 +292,9 @@ end
 # STEP 3: after_bundle (same structure)
 
 after_bundle do
-  # Generators: db + pages controller (Simple Form already done by CSS shared templates)
-  rails_command "db:drop db:create db:migrate"
+ # Generators: db + simple form + pages controller
+  # `db:schema:load` is required in Rails 8 to set up secondary databases (Solid Queue, Cache, Cable) whose tables live in schema files (`queue_schema.rb` etc.), not in `db/migrate/`.
+  rails_command "db:drop db:create db:schema:load db:migrate"
 
   gemfile = File.read("Gemfile")
 

@@ -311,7 +311,8 @@ end
 
 after_bundle do
   # Generators: db + simple form + pages controller
-  rails_command "db:drop db:create db:migrate"
+  # `db:schema:load` is required in Rails 8 to set up secondary databases (Solid Queue, Cache, Cable) whose tables live in schema files (`queue_schema.rb` etc.), not in `db/migrate/`.
+  rails_command "db:drop db:create db:schema:load db:migrate"
 
   generate("simple_form:install", "--bootstrap")
 
