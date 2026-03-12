@@ -70,6 +70,11 @@ append_file "app/javascript/application.js", <<~JS
   import "bootstrap"
 JS
 
+append_file "config/importmap.rb", <<~RUBY
+  pin "bootstrap", to: "bootstrap.min.js", preload: true
+  pin "@popperjs/core", to: "popper.js", preload: true
+RUBY
+
 append_file "app/assets/config/manifest.js", <<~JS
   //= link popper.js
   //= link bootstrap.min.js
