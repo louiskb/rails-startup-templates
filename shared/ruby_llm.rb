@@ -1,6 +1,9 @@
 # shared/ruby_llm.rb
 # Shared Ruby LLM Template
 
+# TODO after adding Ruby_LLM:
+# 1) Add API key to OPENAI_API_KEY ENV var in `.env` file or for any other AI API Key and reflect changes in `config/initializers/ruby_llm.rb` and '.env' files.
+
 # TWO USE CASES:
 # 1. Fresh app: called from main template INSIDE `after_bundle` (gems already added/bundles by main template).
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/ruby_llm.rb`).
