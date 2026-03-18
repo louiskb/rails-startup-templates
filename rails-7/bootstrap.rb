@@ -48,6 +48,11 @@ def source_path(file)
   end
 end
 
+# Ruby version pin — uses the current local Ruby version; silences Heroku's "no Ruby version declared" warning.
+inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
+  "\nruby \"#{RUBY_VERSION}\"\n"
+end
+
 # Gemfile
 inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
@@ -362,6 +367,15 @@ after_bundle do
 
   # Heroku
   run "bundle lock --add-platform x86_64-linux"
+
+  # Node version pin for Heroku — silences "Installing a default version of Node.js" warning.
+  file "package.json", <<~JSON
+    {
+      "engines": {
+        "node": "22.x"
+      }
+    }
+  JSON
 
   # Dotenv
   run "touch '.env'"
