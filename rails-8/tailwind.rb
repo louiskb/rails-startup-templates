@@ -32,6 +32,11 @@ def source_path(file)
   end
 end
 
+# Ruby version pin — uses the current local Ruby version; silences Heroku's "no Ruby version declared" warning.
+inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
+  "\nruby \"#{RUBY_VERSION}\"\n"
+end
+
 # Gemfile
 inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
@@ -116,14 +121,9 @@ if should_install?("auth", "Install authentication? (y/n)")
 
   auth_choice = ask("Choose authentication? (d = devise, r = rails 8 native, n = none)", limited_to: %w[d r n]).downcase
 
-  # Add appropriate gems first (if any) and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
   case auth_choice
   when "d"
-    # devise
     if should_install?("devise", "Install Devise? (y/n)")
-      # Add devise gem to Gemfile (before `bundle install`)
-
-      # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
       devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
 
       gem_line = if devise_choice == "y"
@@ -132,7 +132,6 @@ if should_install?("auth", "Install authentication? (y/n)")
         'gem "devise"'
       end
 
-      # Note the blank line inside the heredoc to keep "Gemfile" formatting clean.
       inject_into_file "Gemfile", before: "group :development, :test do" do
         <<~RUBY
           #{gem_line}
@@ -144,16 +143,13 @@ if should_install?("auth", "Install authentication? (y/n)")
     end
   when "r"
     say "Rails 8 native Authentication installing...", :cyan
-
-    # Rails 8 native `authentication` does not have a gem.
-    # Create a `.txt` file to use later inside `after_bundle` as reference to `apply source_path(shared/authentication.rb)`.
     file "authentication.txt", "confirm"
   else
     say "No Authentication installed.", :yellow
   end
 end
 
-# admin (devise v4.9 required before installation) - an admin dashboard for CRUD operations on models.
+# admin (devise v4.9 required before installation)
 if File.read("Gemfile").include?('gem "devise", "~> 4.9"')
   if should_install?("admin", "Install Active Admin (devise required)? (y/n)")
     inject_into_file "Gemfile", before: "group :development, :test do" do
@@ -330,6 +326,15 @@ after_bundle do
   # Heroku
   run "bundle lock --add-platform x86_64-linux"
 
+  # Node version pin for Heroku — silences "Installing a default version of Node.js" warning.
+  file "package.json", <<~JSON
+    {
+      "engines": {
+        "node": "22.x"
+      }
+    }
+  JSON
+
   # Dotenv
   run "touch '.env'"
 
@@ -341,27 +346,21 @@ after_bundle do
   git add: "."
   git commit: "-m 'initial commit: new rails app setup with Tailwind template.'"
 
-  # APPLY shared templates ONLY if their gems were added during interactive setup.
-  # TODO: Add more conditional gem checks for each new shared template:
-  # File.read() checks if gem was added in Step 2.
   gemfile = File.read("Gemfile")
 
   # shared/devise.rb
   if gemfile.include?("gem \"devise\"")
     apply source_path("shared/devise.rb")
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install devise.'"
   end
 
   # shared/authentication.rb
   if File.exist?("authentication.txt")
-    # Rails 8 native `authentication` has no gem, so checks for `authentication.txt` file created before `after_bundle` to confirm user choice. After applying `shared/authentication.rb`, `authentication.txt` is deleted.
     apply source_path("shared/authentication.rb")
     run "rm -f authentication.txt"
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install rails 8 native authentication.'"
   end
@@ -370,7 +369,6 @@ after_bundle do
   if gemfile.include?('gem "activeadmin"')
     apply source_path("shared/admin.rb")
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install active admin.'"
   end
@@ -379,7 +377,6 @@ after_bundle do
   if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
     apply source_path("shared/dev_tools.rb")
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
   end
@@ -388,7 +385,6 @@ after_bundle do
   if gemfile.include?('gem "friendly_id"')
     apply source_path("shared/friendly_urls.rb")
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install friendly id.'"
   end
@@ -405,7 +401,6 @@ after_bundle do
   if gemfile.include?('gem "cloudinary"')
     apply source_path("shared/image_upload_cloudinary.rb")
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install active storage and cloudinary.'"
   end
@@ -414,7 +409,6 @@ after_bundle do
   if gemfile.include?('gem "pagy"')
     apply source_path("shared/pagination.rb")
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install pagy pagination.'"
   end
@@ -423,7 +417,6 @@ after_bundle do
   if gemfile.include?("gem \"ruby_llm\"")
     apply source_path("shared/ruby_llm.rb")
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install ruby_llm.'"
   end
@@ -432,7 +425,6 @@ after_bundle do
   if gemfile.include?('gem "secure_headers"')
     apply source_path("shared/security.rb")
 
-    # Git
     git add: "."
     git commit: "-m 'feat: install security.'"
   end
@@ -440,7 +432,6 @@ after_bundle do
   # Run all migrations towards the end of `after_bundle`
   rails_command "db:migrate db:seed"
 
-  # Git
   git add: "."
   git commit: "-m 'feat: add migration after initial setup.'"
 
