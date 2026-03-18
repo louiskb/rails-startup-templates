@@ -27,6 +27,11 @@ def source_path(file)
   end
 end
 
+# Ruby version pin
+inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
+  "\nruby \"#{RUBY_VERSION}\"\n"
+end
+
 # Add simple_form gem
 inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
@@ -319,6 +324,15 @@ after_bundle do
   # Heroku
   run "bundle lock --add-platform x86_64-linux"
 
+  # Node version pin (for Heroku)
+  file "package.json", <<~JSON
+    {
+      "engines": {
+        "node": "22.x"
+      }
+    }
+  JSON
+
   # Dotenv
   run "touch '.env'"
 
@@ -432,7 +446,7 @@ after_bundle do
 
     # Git
     git add: "."
-    git commit "-m 'feat: install ruby_llm.'"
+    git commit: "-m 'feat: install ruby_llm.'"
   end
 
   # shared/security.rb
