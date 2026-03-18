@@ -28,7 +28,7 @@ end
 # STANDALONE SUPPORT: Add gem if missing (existing apps only).
 # Inside conditional, once gem added to `Gemfile`, run `bundle install` if not already executed.
 # Fresh apps: main template already added gem → this skips.
-# Regex pattern for reference: `^` start of line anchor (must be at line start before any text), `gem` = literal "gem", `^` (line start) + `gem` literal ensures it's a gem declaration and not commented code etc., `.*` = wildcard in regex (zero+ any characters) `['"]` = starting single or double quote, `devise` = literal "devise", `['"]` = closing single or double quote. Useful to use regex for Gemfile detection and sometimes less code to do the same thing.
+# Regex pattern for reference: `^` start of line anchor (must be at line start before any text), `gem` = literal "gem", `^` (line start) + `gem` literal ensures it's a gem declaration and not commented code etc., `.*` = wildcard in regex (zero+ any characters) `['\"]` = starting single or double quote, `devise` = literal "devise", `['\"]` = closing single or double quote. Useful to use regex for Gemfile detection and sometimes less code to do the same thing.
 # `.match?` with regex works for files with multi-line code.
 gemfile = File.read("Gemfile")
 if !gemfile.match?(/^gem.*['"]cloudinary['"]/)
@@ -73,6 +73,16 @@ gsub_file(
   "config.active_storage.service = :local",
   "config.active_storage.service = :cloudinary"
 )
+
+# Disable Active Storage image variant processing.
+# When using Cloudinary as your storage service, Rails' built-in image variant processor
+# (used for resizing/transforming images via Active Storage) is not needed — Cloudinary
+# handles all transforms itself via its URL API (e.g. `cl_image_tag` with crop/width/height).
+# Leaving it enabled causes a noisy warning on every deploy:
+#   "Generating image variants require the image_processing gem..."
+# Uncomment the line below in config/application.rb to silence it:
+#   config.active_storage.variant_processor = :disabled
+environment "# config.active_storage.variant_processor = :disabled  # Uncomment when using Cloudinary — silences the image_processing gem warning on deploy"
 
 # Post-template setup steps:
 # Replace the `CLOUDINARY_URL` env variable in `.env` with your Cloudinary API key.
