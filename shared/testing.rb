@@ -238,14 +238,15 @@ unless File.exist?("spec/models/post_spec.rb")
   create_file "spec/models/post_spec.rb", <<~RUBY
     require "rails_helper"
 
-    RSpec.describe User, type: :model do
+    RSpec.describe Post, type: :model do
       it "has a valid factory" do
         post = FactoryBot.build(:post)
-        expect(user.valid?).to eq(true)
+        expect(post.valid?).to eq(true)
       end
 
       it { should validate_presence_of(:title) }
       it { should validate_uniqueness_of(:title).case_insensitive }
+    end
   RUBY
 end
 
