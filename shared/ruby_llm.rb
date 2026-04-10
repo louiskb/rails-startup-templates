@@ -44,10 +44,9 @@ append_file ".env", <<~RUBY
   # OPENAI_API_KEY=replace_with_your_openai_api_key
 RUBY
 
-say ""
-say "📋 POST-INSTALL: RubyLLM setup remaining:", :cyan
-say "  1. Get API key from https://platform.openai.com/api-keys", :cyan
-say "  2. Set OPENAI_API_KEY in .env", :cyan
-say "  3. Note: acts_as API is deprecated — see https://rubyllm.com/upgrading-to-1-7/", :cyan
-say ""
+# POST-INSTALL: RubyLLM setup remaining:
+#   1. Get API key from https://platform.openai.com/api-keys
+#   2. Set OPENAI_API_KEY in .env
+#   3. Note: acts_as API is deprecated — see https://rubyllm.com/upgrading-to-1-7/
+
 say "✅ Ruby LLM installation complete!", :green

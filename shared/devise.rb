@@ -113,7 +113,6 @@ else
   rails_command "db:migrate"
 end
 
-say ""
-say "  Note: With Turbo, sign out links need: data: { turbo_method: :delete }", :cyan
-say ""
+# Note: With Turbo, sign out links need: data: { turbo_method: :delete }
+
 say "✅ Devise installation complete!", :green

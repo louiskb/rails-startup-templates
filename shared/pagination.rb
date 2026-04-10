@@ -82,13 +82,11 @@ end
 #   <%= record.name %>
 # <% end %>
 
-say ""
-say "📋 POST-INSTALL: Pagy setup remaining:", :cyan
-say "  1. Add `include Pagy::Backend` to ApplicationController", :cyan
-say "  2. Add `include Pagy::Frontend` to ApplicationHelper", :cyan
-say "  3. Use in controllers: @pagy, @records = pagy(Model.all, limit: 12)", :cyan
-say "  4. Use in views: <%== pagy_bootstrap_nav(@pagy) %>", :cyan
-say ""
+# POST-INSTALL: Pagy setup remaining:
+#   1. Add `include Pagy::Backend` to ApplicationController
+#   2. Add `include Pagy::Frontend` to ApplicationHelper
+#   3. Use in controllers: @pagy, @records = pagy(Model.all, limit: 12)
+#   4. Use in views: <%== pagy_bootstrap_nav(@pagy) %>
 
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).

@@ -94,14 +94,12 @@ environment "# config.active_storage.variant_processor = :disabled  # Uncomment 
 # Display image(s) in the view: `<%= cl_image_tag @your_model.photo.key, height: 250, width: 350, crop: :fill %>`
 # Add `CLOUDINARY_URL` env variable to deployment (e.g. Heroku): run `heroku config:set CLOUDINARY_URL=xxxxxxxxxxxxx...`. Confirm it with `heroku config:get CLOUDINARY_URL`.
 
-say ""
-say "📋 POST-INSTALL: Cloudinary setup remaining:", :cyan
-say "  1. Sign up at https://cloudinary.com (free tier: 25GB storage)", :cyan
-say "  2. Set CLOUDINARY_URL in .env (format: cloudinary://KEY:SECRET@CLOUD_NAME)", :cyan
-say "  3. Add `has_one_attached :photo` to models that need images", :cyan
-say "  4. Add `<%= f.input :photo, as: :file %>` to forms", :cyan
-say "  5. Display with: <%= cl_image_tag @model.photo.key, height: 300, crop: :fill %>", :cyan
-say ""
+# POST-INSTALL: Cloudinary setup remaining:
+#   1. Sign up at https://cloudinary.com (free tier: 25GB storage)
+#   2. Set CLOUDINARY_URL in .env (format: cloudinary://KEY:SECRET@CLOUD_NAME)
+#   3. Add `has_one_attached :photo` to models that need images
+#   4. Add `<%= f.input :photo, as: :file %>` to forms
+#   5. Display with: <%= cl_image_tag @model.photo.key, height: 300, crop: :fill %>
 
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
