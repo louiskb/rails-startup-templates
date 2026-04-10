@@ -90,23 +90,23 @@ end
 unless File.exist?("config/initializers/rack_attack.rb")
   say "Creating rack-attack rate limiting...", :cyan
 
-  create_file "config/initializers/rack_attack.rb", <<-RUBY
-  class Rack::Attack
-    # Throttle login attempts (brute force protection)
-    throttle("req/ip login", limit: 5, period: 1.minute) do |req|
-      req.ip if req.path == '/users/sign_in' && req.post?
-    end
+  create_file "config/initializers/rack_attack.rb", <<~RUBY
+    class Rack::Attack
+      # Throttle login attempts (brute force protection)
+      throttle("req/ip login", limit: 5, period: 1.minute) do |req|
+        req.ip if req.path == "/users/sign_in" && req.post?
+      end
 
-    # Throttle API requests
-    throttle("req/ip api", limit: 100, period: 1.minute) do |req|
-      req.ip if req.path.start_with?('/api')
-    end
+      # Throttle API requests
+      throttle("req/ip api", limit: 100, period: 1.minute) do |req|
+        req.ip if req.path.start_with?("/api")
+      end
 
-    # Block obvious bad bots
-    Rack::Attack.blocklist("bad bots") do |req|
-      Rack::Attack::Request.new(req).user_agent.to_s.downcase.match?(/\b(ahrefs|semrush|mj12bot)\b/i)
+      # Block obvious bad bots
+      blocklist("bad bots") do |req|
+        req.user_agent.to_s.match?(/ahrefs|semrush|mj12bot/i)
+      end
     end
-  end
   RUBY
 
   say "Rate limiting: 5 logins/min/IP, 100 API/min/IP enabled.", :green
