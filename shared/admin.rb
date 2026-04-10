@@ -50,6 +50,13 @@ if !gemfile.match?(/^gem.*['"]activeadmin['"]/)
   run "bundle install" unless system("bundle check")
 end
 
+say ""
+say "📋 POST-INSTALL: ActiveAdmin setup remaining:", :cyan
+say "  1. Create admin user: AdminUser.create!(email: 'admin@example.com', password: 'password')", :cyan
+say "  2. Access dashboard at /admin", :cyan
+say "  3. Register models: rails generate active_admin:resource ModelName", :cyan
+say ""
+
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
 main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
