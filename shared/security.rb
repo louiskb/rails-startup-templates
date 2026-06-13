@@ -56,15 +56,17 @@ unless File.exist?("config/initializers/secure_headers.rb")
   # `create_file` works similarly to `file` method.
   create_file "config/initializers/secure_headers.rb", <<~RUBY
     SecureHeaders::Configuration.default do |config|
-      config.csp = {
-        default_src: %w['self'],
-        style_src: %w['self' 'unsafe-inline'],
-        script_src: %w['self'],
-        img_src: %w['self' data:],
-        font_src: %w['self' data:],
-        connect_src: %w['self'],
-        frame_ancestors: %w['none']
-      }
+      # CSP is OPTED OUT here on purpose — Rails' own Content Security Policy
+      # (config/initializers/content_security_policy.rb) manages it instead.
+      #
+      # Why: secure_headers' static `script_src` could not carry the per-request
+      # nonce that importmap's inline `<script type="importmap">` tag needs, so a
+      # locked-down `script_src %w['self']` silently killed ALL Turbo/Stimulus/
+      # Bootstrap JS on every page. Rails' CSP integrates with the nonce generator
+      # and the importmap/javascript tag helpers, so it nonces those scripts
+      # automatically. We keep secure_headers for everything else (HSTS, frame
+      # options, etc.) and let Rails own CSP.
+      config.csp = SecureHeaders::OPT_OUT
 
        config.hsts = "max-age=31556926; includeSubDomains; preload"
 
@@ -76,14 +78,62 @@ unless File.exist?("config/initializers/secure_headers.rb")
     end
   RUBY
 
-  say "Headers: CSP, HSTS, X-Frame, XSS protection enabled", :green
+  say "Headers: HSTS, X-Frame, XSS protection enabled (CSP handled by Rails)", :green
 
 else
   say "Secure headers initializer exists.", :yellow
 end
 
-# `secure_headers`: CSP, HSTS, XSS protection (automatic).
+# `secure_headers`: HSTS, frame options, XSS protection (automatic).
 # `secure_headers` docs = https://github.com/github/secure_headers
+
+# Content Security Policy — Rails' built-in CSP (replaces secure_headers' CSP).
+# Rails generates `config/initializers/content_security_policy.rb` fully
+# commented out. We overwrite it with an importmap-safe policy that:
+#   - carries a per-request nonce on `script-src` (so importmap's inline
+#     `<script type="importmap">` and Turbo/Stimulus boot scripts are allowed —
+#     a static `script-src 'self'` silently kills ALL of them);
+#   - allows the assets the other modules pull in: Google Fonts CSS
+#     (fonts.googleapis.com), Google Fonts files (fonts.gstatic.com), and
+#     Cloudinary images (res.cloudinary.com).
+csp_file = "config/initializers/content_security_policy.rb"
+# NB: Rails generates this file fully COMMENTED OUT but the comment text already
+# contains "content_security_policy_nonce_generator" — so we must key the "already
+# configured" check off a marker unique to OUR config (`SecureRandom.base64(16)`),
+# otherwise the default file matches and we never overwrite it.
+if !File.exist?(csp_file) || !File.read(csp_file).include?("SecureRandom.base64(16)")
+  say "Configuring Rails Content Security Policy (importmap-safe nonce)...", :cyan
+  create_file csp_file, <<~RUBY, force: true
+    Rails.application.configure do
+      config.content_security_policy do |policy|
+        policy.default_src :self, :https
+        policy.font_src    :self, :https, :data, "fonts.gstatic.com"
+        policy.img_src     :self, :https, :data, "res.cloudinary.com"
+        policy.object_src  :none
+        policy.script_src  :self, :https
+        # Bootstrap/Turbo inject inline styles, and the nonce is applied to
+        # script-src only — so keep :unsafe_inline here. Google Fonts CSS is
+        # loaded from fonts.googleapis.com.
+        policy.style_src   :self, :https, :unsafe_inline, "fonts.googleapis.com"
+        policy.connect_src :self, :https
+        policy.frame_ancestors :none
+      end
+
+      # Per-request nonce. MUST be random per request: do NOT use
+      # `request.session.id` — it is nil on a visitor's first request (no CSP
+      # nonce → importmap blocked) and would be shared across requests.
+      config.content_security_policy_nonce_generator = ->(request) { SecureRandom.base64(16) }
+
+      # Apply the nonce to script-src only. importmap-rails and the
+      # `javascript_*_tag` helpers read it automatically.
+      config.content_security_policy_nonce_directives = %w[script-src]
+    end
+  RUBY
+
+  say "CSP: importmap-safe nonce on script-src; Google Fonts + Cloudinary allowed.", :green
+else
+  say "Rails CSP initializer already configured.", :yellow
+end
 
 # `rack-attack` (rate limiting)
 # Rate limiting: 5 login attempts/minute/IP, 100 API calls/minute/IP, blocks bad bots.
