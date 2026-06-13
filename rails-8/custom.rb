@@ -201,10 +201,10 @@ if File.read("Gemfile").include?('gem "devise", "~> 4.9"')
 end
 
 # dev_tools
-if should_install?("dev_tools", "Install dev tools ('Better Errors', 'Annotate', 'Rubocop')? (y/n)")
+if should_install?("dev_tools", "Install dev tools ('Better Errors', 'AnnotateRb', 'Rubocop')? (y/n)")
   inject_into_file "Gemfile", after: "group :development do\n" do
     <<~RUBY
-      gem "annotate"
+      gem "annotaterb"
       gem "better_errors"
       gem "binding_of_caller"
       gem "pry-byebug"
@@ -418,12 +418,12 @@ after_bundle do
   end
 
   # shared/dev_tools.rb
-  if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotate"')
+  if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotaterb"')
     apply source_path("shared/dev_tools.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install dev_tools template gems (annotate, better errors, pry, awesome print, rubocop).'"
+    git commit: "-m 'feat: install dev_tools template gems (annotaterb, better errors, pry, awesome print, rubocop).'"
   end
 
   # shared/friendly_urls.rb

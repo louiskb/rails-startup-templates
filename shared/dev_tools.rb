@@ -7,10 +7,10 @@
 
 # GUARD 1: Skip entire template if Dev Tools is already installed.
 # We treat "devtools fully installed" as:
-# - Annotate config initializer exists
+# - AnnotateRb config file exists (.annotaterb.yml)
 # - RuboCop config file exists
-if File.exist?("config/initializers/annotate.rb") && File.exist?(".rubocop.yml")
-  say "Dev tools already configured (Annotate initializer and RuboCop config found), skipping.", :yellow
+if File.exist?(".annotaterb.yml") && File.exist?(".rubocop.yml")
+  say "Dev tools already configured (AnnotateRb config and RuboCop config found), skipping.", :yellow
   exit
 end
 
@@ -34,17 +34,20 @@ unless gemfile.match?(/^gem.*['"]better_errors['"]/)
   missing_gems << "better_errors"
 end
 
-unless gemfile.match?(/^gem.*['"]annotate['"]/)
-  say 'Adding gem "annotate" to Gemfile (development group)...', :blue
+# NOTE: use `annotaterb` (the maintained fork), NOT the original `annotate` gem.
+# Under Rails 8 / Ruby 3.3 `gem "annotate"` resolves to the ancient 2.6.5 (newer
+# annotate requires rails < 7.1) and crashes with `File.exists?` removed.
+unless gemfile.match?(/^gem.*['"]annotaterb['"]/)
+  say 'Adding gem "annotaterb" to Gemfile (development group)...', :blue
 
   inject_into_file "Gemfile", after: "group :development do\n" do
     <<~RUBY
-      gem "annotate"
+      gem "annotaterb"
 
     RUBY
   end
 
-  missing_gems << "annotate"
+  missing_gems << "annotaterb"
 end
 
 unless gemfile.match?(/^gem.*['"]rubocop['"]/)
@@ -99,25 +102,24 @@ else
 end
 
 # DEV TOOLS GEM SETUP
-# 1. Annotate gem setup
-unless File.exist?("config/initializers/annotate.rb")
-  # Safely installs the `annotate` gem's initializer only if the gem is actually installed and available. Prevents errors when `annotate` is missing or not bundled yet, while being idempotent (safe to re-run).
-  # `bundle exec` is a Bundler subcommand that executes any CLI tool (like annotate) in your bundle's context - prioritizes project gems over system-wide ones.
-  # `bundle exec annotate --help` runs `annotate --help` via Bundler (which ensures correct gem version with Bundler). `--help` just prints usage, creates no files.
-  # `> /dev/null 2>&1` redirects help text and errors to trash and is silent showing no extra text:
-    # `> /dev/null` redirects `stdout` (help text) to `/dev/null (trash)` - user sees nothing.
-    # `2>&1` redirects `stderr (errors) to `stdout` (which goes to `/dev/null`). Silent even if errors.
-  # `system()` runs shell command and returns `true` if exit code is 0 (success). Returns `false` if exit code is not 0 (failure).
-  # ** In summary, (1) if `annotate` is not installed then `bundle exec annotate --help` won't work, and (2) `> /dev/null 2>&1` is a way to silence extra text from `--help` and any errors. **
-  if system("bundle exec annotate --help > /dev/null 2>&1")
-    say "Running `annotate --install` to create initializer and default config...", :cyan
+# 1. AnnotateRb gem setup
+# AnnotateRb adds schema comments to models/specs/factories/routes.
+# `rails g annotate_rb:install` generates the `.annotaterb.yml` config AND a Rake
+# hook that re-annotates models automatically after `db:migrate`.
+# To annotate manually at any time: `bundle exec annotaterb models`.
+unless File.exist?(".annotaterb.yml")
+  # Only run the generator if the gem is actually available (idempotent / safe in
+  # standalone mode before `bundle install`). `bundle exec annotaterb version`
+  # exits 0 when the binary resolves; `> /dev/null 2>&1` silences its output.
+  if system("bundle exec annotaterb version > /dev/null 2>&1")
+    say "Running `annotate_rb:install` (creates .annotaterb.yml + db:migrate hook)...", :cyan
 
-    generate "annotate:install"
+    generate "annotate_rb:install"
   else
-    say "Annotate gem not available (bundle exec annotate failed). Skipping annotate install.", :yellow
+    say "AnnotateRb not available yet (run `bundle install` first). Skipping annotate install.", :yellow
   end
 else
-  say "Annotate initializer already exists, skipping annotate install.", :yellow
+  say "AnnotateRb config (.annotaterb.yml) already exists, skipping install.", :yellow
 end
 
 # 2. Rubocop Setup
