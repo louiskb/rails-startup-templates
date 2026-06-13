@@ -32,6 +32,28 @@ unless File.exist?("app/models/admin_user.rb")
   end
 end
 
+# AUTH FIX (Devise + ActiveAdmin combined):
+# The Devise module adds `before_action :authenticate_user!` to
+# ApplicationController. `ActiveAdmin::BaseController < ApplicationController`, so
+# it INHERITS that callback — meaning `/admin` would require BOTH a customer
+# session AND an admin session, and an admin signing in at `/admin/login` alone is
+# bounced to `/users/sign_in`. The admin literally can't use the panel. (Sneaky:
+# invisible in manual QA if you happen to also be logged in as a customer.)
+# This initializer removes the inherited callback from ActiveAdmin controllers
+# only; admin pages keep their own admin_user auth via `ActiveAdmin::Devise.config`.
+unless File.exist?("config/initializers/active_admin_authentication.rb")
+  create_file "config/initializers/active_admin_authentication.rb", <<~RUBY
+    # Skip the app-wide customer `authenticate_user!` on ActiveAdmin controllers.
+    # `raise: false` keeps this safe even if ApplicationController defines no such
+    # callback (e.g. Devise wasn't configured to add it).
+    Rails.application.config.to_prepare do
+      ActiveAdmin::BaseController.skip_before_action :authenticate_user!, raise: false
+    end
+  RUBY
+
+  say "Shipped ActiveAdmin auth fix (skips inherited authenticate_user!).", :green
+end
+
 # rails_command "db:migrate"
 
 # STANDALONE SUPPORT: Add gem if missing (existing apps only).
