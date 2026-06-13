@@ -105,15 +105,15 @@ rails new my_app -d postgresql -m TEMPLATE_URL my_app
 | **Devise** | `DEVISE=true/false` | User authentication, login/signup pages, customized views |
 | **Navbar** | `NAVBAR=true/false` | Pre-built navigation bar (Le Wagon style or custom) |
 | **Testing** | `TESTING=true/false` | RSpec, FactoryBot, Faker, Shoulda Matchers |
-| **Dev Tools** | `DEV_TOOLS=true/false` | Better Errors, Binding of Caller, Annotate, Awesome Print |
+| **Dev Tools** | `DEV_TOOLS=true/false` | Better Errors, Binding of Caller, AnnotateRb, Awesome Print |
 | **Security** | `SECURITY=true/false` | Rack Attack, Secure Headers |
 | **Pagination** | `PAGINATION=true/false` | Pagy gem with helper configuration |
 | **Image Upload Cloudinary** | `IMAGE_UPLOAD_CLOUDINARY=true/false` | ActiveStorage and Cloudinary configuration |
 | **Friendly URLs** | `FRIENDLY_URLS=true/false` | FriendlyId gem for slug-based ID/URLs |
-| **Ruby LLM** | `ADMIN=true/false` | RubyLLM for AI models Integration |
+| **Ruby LLM** | `RUBY_LLM=true/false` | RubyLLM for AI models Integration |
 | **Admin** | `ADMIN=true/false` | ActiveAdmin auto CRUD dashboard with authentication | Devise is required and currently only compatible with Devise versions below v5.0. When using templates, only use with Devise v4.9 |
-| **Bootstrap** | `DEVISE=true/false` | Bootstrap integration | Only use with `custom.rb` main template |
-| **Tailwind** | `DEVISE=true/false` | Tailwind CSS integration | Only use with `custom.rb` main template |
+| **Bootstrap** | `BOOTSTRAP=true/false` | Bootstrap integration | Only use with `custom.rb` main template |
+| **Tailwind** | `TAILWIND=true/false` | Tailwind CSS integration | Only use with `custom.rb` main template |
 | **Authentication** | `DEVISE=true/false` | Rails 8 native authentication | Only use with Rails 8 main templates |
 
 **If ENV variable is not set**, the template will prompt you interactively (yes/no).
@@ -418,7 +418,7 @@ Available shared modules (compatible with both Rails 7 & 8):
 1. `navbar.rb` - Navigation bar (Le Wagon style or custom)
 2. `testing.rb` - RSpec, FactoryBot, Faker setup
 3. `image_upload_cloudinary.rb` - Active Storage with Cloudinary for image uploads
-4. `dev_tools.rb` - Better Errors, Annotate, Awesome Print
+4. `dev_tools.rb` - Better Errors, AnnotateRb, Awesome Print
 5. `security.rb` - Security headers & rate limiting
 6. `pagination.rb` - Pagy pagination
 7. `friendly_urls.rb` - SEO-friendly URLs with FriendlyId
