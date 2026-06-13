@@ -87,33 +87,26 @@ else
   say "RSpec `spec_helper.rb` exists.", :yellow
 end
 
-# Custom RSpec config
-if File.exist?("spec/spec_helper.rb")
-  say "Customizing RSpec config...", :cyan
+# RSpec config — IMPORTANT: do NOT inject these includes into `spec/spec_helper.rb`.
+# `.rspec` requires `spec_helper` *before Rails (and therefore the gems) loads*, so
+# `FactoryBot` and `Shoulda::Matchers` aren't defined there yet → `NameError` on
+# every run the moment a real spec exists. Instead we put config in `spec/support/*`
+# files, which are required from `rails_helper` (after Rails boots) — see the
+# `Dir[...].each { require }` line appended to `spec/rails_helper.rb` below.
 
-  # FactoryBot in Rails + Shoulda Matchers (optional) config.
-  # Shoulda Matchers are a Ruby gem that provides simple, one-line RSpec tests for common Rails behaviors like model validations, associations, and callbacks—they complement FactoryBot perfectly by letting you test those models you create with factories.
-  # Without Shoulda:
-    # it { expect(user.email).to be_present }
-    # it { expect(user.email).to be_valid }
-    # it { expect(User).to validate_uniqueness_of(:email) }
-  # With Shoulda ✅:
-    # it { should validate_presence_of(:email) }
-    # it { should validate_uniqueness_of(:email).case_insensitive }
-  inject_into_file "spec/spec_helper.rb", after: "RSpec.configure do |config|\n" do
-    <<~RUBY
-      # FactoryBot in Rails
-      config.include FactoryBot::Syntax::Methods
-      # Shoulda Matchers
-      config.include Shoulda::Matchers::ActiveModel
-      config.include Shoulda::Matchers::ActiveRecord
-    RUBY
-  end
-end
-
-# Shoulda Matchers full config
-say "Configuring Shoulda Matchers...", :cyan
 run "mkdir -p spec/support"
+
+# Shoulda Matchers config.
+# Shoulda Matchers provide simple one-line RSpec tests for common Rails behaviors
+# like validations, associations, and callbacks — they complement FactoryBot.
+# Without Shoulda:
+  # it { expect(User).to validate_uniqueness_of(:email) }
+# With Shoulda ✅:
+  # it { should validate_uniqueness_of(:email).case_insensitive }
+# NOTE: the `integrate` block below already mixes the matchers into RSpec — we do
+# NOT add separate `config.include Shoulda::Matchers::ActiveModel/ActiveRecord`
+# lines (they were the other half of the old `spec_helper` NameError crash).
+say "Configuring Shoulda Matchers...", :cyan
 create_file "spec/support/shoulda_matchers.rb", <<~RUBY
   # Shoulda Matchers
   Shoulda::Matchers.configure do |config|
@@ -123,6 +116,46 @@ create_file "spec/support/shoulda_matchers.rb", <<~RUBY
     end
   end
 RUBY
+
+# FactoryBot syntax methods — lets specs call `build(:post)` instead of
+# `FactoryBot.build(:post)`. Lives in a support file (loaded after Rails) for the
+# same reason as above.
+say "Configuring FactoryBot RSpec syntax...", :cyan
+create_file "spec/support/factory_bot.rb", <<~RUBY
+  RSpec.configure do |config|
+    config.include FactoryBot::Syntax::Methods
+  end
+RUBY
+
+# Devise test helpers + Rails 8 route loading fix.
+# Only ship this when Devise is present in the app.
+# Rails 8 LAZILY loads routes in the test environment; Devise registers its route
+# mappings only when routes are drawn, so calling `sign_in` in a request/system
+# spec raises "Could not find a valid mapping" until routes load. Forcing
+# `reload_routes_unless_loaded` before those specs run fixes it. We also include
+# Warden's helpers so ActiveAdmin (admin_user scope) specs can use
+# `login_as(admin, scope: :admin_user)` — Devise's `sign_in` doesn't reliably
+# populate a second Warden scope.
+if File.exist?("config/initializers/devise.rb") || File.exist?("app/models/user.rb")
+  say "Configuring Devise test helpers (Rails 8 lazy-route fix)...", :cyan
+  create_file "spec/support/devise.rb", <<~RUBY
+    RSpec.configure do |config|
+      config.include Devise::Test::IntegrationHelpers, type: :request
+      config.include Devise::Test::IntegrationHelpers, type: :system
+      config.include Devise::Test::ControllerHelpers, type: :controller
+
+      # Warden helpers for multi-scope login (e.g. ActiveAdmin's :admin_user):
+      #   login_as(admin, scope: :admin_user)
+      config.include Warden::Test::Helpers
+      config.after(:each) { Warden.test_reset! }
+
+      # Rails 8 lazy-loads routes in test; Devise mappings only register once
+      # routes are drawn. Force them before request/system specs run.
+      config.before(:each, type: :request) { Rails.application.reload_routes_unless_loaded }
+      config.before(:each, type: :system)  { Rails.application.reload_routes_unless_loaded }
+    end
+  RUBY
+end
 
 # `Dir[...]` is Ruby's `Dir.glob()` class method (shorthand syntax). Expands glob patterns into an array of matching file paths.
 #
@@ -138,6 +171,37 @@ append_file "spec/rails_helper.rb", <<~RUBY
   # Usually would need to add e.g. `require "shoulder/matchers"` manually.
   Dir[Rails.root.join('spec', 'support', '**', '*.rb')].sort.each { |f| require f }
 RUBY
+
+# FACTORY LOCATION: keep factories in exactly ONE place (spec/factories).
+# factory_bot_rails loads BOTH `test/factories` and `spec/factories`. Earlier
+# modules (Devise, Admin) run their model generators BEFORE this module, and with
+# the default `test_framework :test_unit` config they drop EMPTY factory stubs in
+# `test/factories/{users,admin_users}.rb`. The moment the app later adds a real
+# `spec/factories/users.rb`, factory_bot loads both and raises
+# `FactoryBot::DuplicateDefinitionError: Factory already registered: user`.
+#
+# Fix part 1 — point generators at RSpec + spec/factories so any future
+# `rails g model X` writes its factory to spec/factories (not test/factories).
+if File.exist?("config/application.rb")
+  say "Pointing generators at RSpec specs + spec/factories...", :cyan
+  gsub_file "config/application.rb",
+            /^(\s*)generate\.test_framework :test_unit.*$/,
+            "\\1generate.test_framework :rspec, fixtures: true, view_specs: false, helper_specs: false, routing_specs: false\n" \
+            "\\1generate.fixture_replacement :factory_bot, dir: \"spec/factories\""
+end
+
+# Fix part 2 — remove the empty factory stubs already created in test/factories
+# by earlier generators. Only delete EMPTY-body factories so a standalone app's
+# real test/factories are never touched. Then drop the dir if it's now empty.
+if Dir.exist?("test/factories")
+  Dir["test/factories/*.rb"].each do |factory_file|
+    if File.read(factory_file) =~ /factory\s+[:"'][\w]+["']?\s+do\s*\n\s*end/
+      say "Removing empty factory stub: #{factory_file}", :cyan
+      remove_file factory_file
+    end
+  end
+  Dir.rmdir("test/factories") if Dir.empty?("test/factories")
+end
 
 # Example Factory (User)
 #
