@@ -136,7 +136,9 @@ RUBY
 # Warden's helpers so ActiveAdmin (admin_user scope) specs can use
 # `login_as(admin, scope: :admin_user)` — Devise's `sign_in` doesn't reliably
 # populate a second Warden scope.
-if File.exist?("config/initializers/devise.rb") || File.exist?("app/models/user.rb")
+# Devise only: Rails 8 authentication also creates app/models/user.rb, and this file would then
+# reference an undefined Devise constant (every spec errored before running).
+if File.exist?("config/initializers/devise.rb")
   say "Configuring Devise test helpers (Rails 8 lazy-route fix)...", :cyan
   create_file "spec/support/devise.rb", <<~RUBY
     RSpec.configure do |config|
