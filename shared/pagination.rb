@@ -34,7 +34,7 @@ end
 
 # Create `pagy.rb` initializer - Configure global options and special features. No generator needed.
 unless File.exist?("config/initializers/pagy.rb")
-  run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/config/pagy.rb > config/initializers/pagy.rb"
+  run "curl -fsSL https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/config/pagy.rb > config/initializers/pagy.rb"
 
   say "Added `pagy.rb` initializer.", :green
 end
@@ -43,7 +43,7 @@ end
 if api_only
   say "API-only app: no pagination stylesheet (JSON responses carry pagination headers).", :yellow
 elsif !gemfile.match?(/^\s*gem.*['"]tailwindcss-rails['"]/) && !gemfile.match?(/^\s*gem.*['"]bootstrap['"]/)
-  run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy.css > app/assets/stylesheets/pagy.css"
+  run "curl -fsSL https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy.css > app/assets/stylesheets/pagy.css"
 
   inject_into_file "app/assets/stylesheets/pagy.css", before: ".pagy {" do
     <<~CSS
@@ -58,7 +58,7 @@ elsif gemfile.match?(/^\s*gem.*['"]tailwindcss-rails['"]/)
     # Tailwind 4 compiles only what app/assets/tailwind/application.css imports. The old location,
     # app/assets/stylesheets/, was served raw: its `@import "tailwindcss";` made the browser request
     # /assets/tailwindcss (a console error on every page) and the Pagy nav stayed unstyled.
-    run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy-tailwind.css > app/assets/tailwind/pagy.css"
+    run "curl -fsSL https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy-tailwind.css > app/assets/tailwind/pagy.css"
     # application.css already imports tailwindcss; a second import would duplicate the whole framework.
     gsub_file "app/assets/tailwind/pagy.css", /\A@import "tailwindcss";\n+/,
       "/* Pagy's Tailwind styles (https://ddnexus.github.io/pagy/resources/stylesheets/), imported by application.css */\n\n"

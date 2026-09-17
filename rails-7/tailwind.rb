@@ -36,13 +36,17 @@ end
 # which is right standalone (`rails app:template`), but inside `rails new` that `exit` would end
 # the whole generation: every later module, the migrations and the final commits skipped, with
 # the shell reporting success. A clean exit (status 0) now skips only that module; a failing one
-# (`exit 1`, `abort`) still stops the run.
+# (`exit 1`, `abort`) still stops the run. A skipped module leaves nothing to commit, and an empty
+# `git commit` would abort `rails new` too, so every commit after a module is guarded.
 def apply_shared(file)
+  padding = shell.padding
   apply source_path(file)
 rescue SystemExit => e
   raise unless e.success?
 
-  say "#{file} stopped early (already installed); continuing with the next step.", :yellow
+  # Thor's `apply` only restores its output indent when the module runs to the end.
+  shell.padding = padding
+  say "#{file} exited early (its guard skipped it); continuing with the next step.", :yellow
 end
 
 # Ruby version pin — uses the current local Ruby version; silences Heroku's "no Ruby version declared" warning.
@@ -365,7 +369,7 @@ after_bundle do
     apply_shared("shared/devise.rb")
 
     git add: "."
-    git commit: "-m 'feat: install devise.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install devise.'"
   end
 
   # shared/admin.rb (Devise required before installation)
@@ -373,7 +377,7 @@ after_bundle do
     apply_shared("shared/admin.rb")
 
     git add: "."
-    git commit: "-m 'feat: install active admin.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install active admin.'"
   end
 
   # shared/dev_tools.rb
@@ -381,7 +385,7 @@ after_bundle do
     apply_shared("shared/dev_tools.rb")
 
     git add: "."
-    git commit: "-m 'feat: install dev_tools template gems (annotaterb, better errors, pry, awesome print, rubocop).'"
+    run "git diff --cached --quiet || git commit -m 'feat: install dev_tools template gems (annotaterb, better errors, pry, awesome print, rubocop).'"
   end
 
   # shared/friendly_urls.rb
@@ -389,7 +393,7 @@ after_bundle do
     apply_shared("shared/friendly_urls.rb")
 
     git add: "."
-    git commit: "-m 'feat: install friendly id.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install friendly id.'"
   end
 
   # shared/testing.rb
@@ -397,7 +401,7 @@ after_bundle do
     apply_shared("shared/testing.rb")
 
     git add: "."
-    git commit: "-m 'feat: install testing.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install testing.'"
   end
 
   # shared/image_upload_cloudinary.rb
@@ -405,7 +409,7 @@ after_bundle do
     apply_shared("shared/image_upload_cloudinary.rb")
 
     git add: "."
-    git commit: "-m 'feat: install active storage and cloudinary.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install active storage and cloudinary.'"
   end
 
   # shared/pagination.rb
@@ -413,7 +417,7 @@ after_bundle do
     apply_shared("shared/pagination.rb")
 
     git add: "."
-    git commit: "-m 'feat: install pagy pagination.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install pagy pagination.'"
   end
 
   # shared/ruby_llm.rb
@@ -421,7 +425,7 @@ after_bundle do
     apply_shared("shared/ruby_llm.rb")
 
     git add: "."
-    git commit: "-m 'feat: install ruby_llm.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install ruby_llm.'"
   end
 
   # shared/security.rb
@@ -429,7 +433,7 @@ after_bundle do
     apply_shared("shared/security.rb")
 
     git add: "."
-    git commit: "-m 'feat: install security.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install security.'"
   end
 
   # shared/claude_code.rb: last module, so it can see everything installed above.
@@ -438,7 +442,7 @@ after_bundle do
 
     # Git
     git add: "."
-    git commit: "-m 'chore: add Claude Code project setup'"
+    run "git diff --cached --quiet || git commit -m 'chore: add Claude Code project setup'"
   end
 
   # Run all migrations towards the end of `after_bundle`
@@ -464,7 +468,7 @@ after_bundle do
   # Last on purpose: every commit above is made before the hook exists.
   apply_shared("shared/conventional_commits.rb")
   git add: "."
-  git commit: "-m 'chore: enforce conventional commits with a commit-msg hook'"
+  run "git diff --cached --quiet || git commit -m 'chore: enforce conventional commits with a commit-msg hook'"
 
   say "✅ Rails 7 Tailwind template installation complete! 🚀🔥", :green
 end

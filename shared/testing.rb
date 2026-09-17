@@ -191,7 +191,8 @@ if File.exist?("app/controllers/concerns/authentication.rb") && !File.exist?("sp
     end
   RUBY
 
-  unless File.exist?("spec/requests/authentication_spec.rb")
+  # The generated SessionsController redirects to root_url after sign-in, so the spec needs a root route.
+  if !File.exist?("spec/requests/authentication_spec.rb") && File.read("config/routes.rb").match?(/^\s*root /)
     run "mkdir -p spec/requests"
     create_file "spec/requests/authentication_spec.rb", <<~RUBY
       require "rails_helper"
