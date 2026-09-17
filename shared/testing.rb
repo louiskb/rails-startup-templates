@@ -162,6 +162,70 @@ if File.exist?("config/initializers/devise.rb")
   RUBY
 end
 
+# Rails 8 authentication generator: its sign-in helper ships for Minitest only
+# (test/test_helpers/session_test_helper.rb). The same helper for RSpec request specs, plus a spec
+# for the sign-in / sign-out flow.
+if File.exist?("app/controllers/concerns/authentication.rb") && !File.exist?("spec/support/authentication.rb")
+  say "Configuring Rails 8 authentication test helpers...", :cyan
+  create_file "spec/support/authentication.rb", <<~RUBY
+    # Sign in without going through the form (mirrors Rails' Minitest SessionTestHelper):
+    #   sign_in_as(user); get root_path
+    module AuthenticationHelpers
+      def sign_in_as(user)
+        Current.session = user.sessions.create!
+
+        ActionDispatch::TestRequest.create.cookie_jar.tap do |cookie_jar|
+          cookie_jar.signed[:session_id] = Current.session.id
+          cookies["session_id"] = cookie_jar[:session_id]
+        end
+      end
+
+      def sign_out
+        Current.session&.destroy!
+        cookies.delete("session_id")
+      end
+    end
+
+    RSpec.configure do |config|
+      config.include AuthenticationHelpers, type: :request
+    end
+  RUBY
+
+  unless File.exist?("spec/requests/authentication_spec.rb")
+    run "mkdir -p spec/requests"
+    create_file "spec/requests/authentication_spec.rb", <<~RUBY
+      require "rails_helper"
+
+      RSpec.describe "Authentication", type: :request do
+        let(:user) { create(:user) }
+
+        it "signs in with the right password" do
+          post session_path, params: { email_address: user.email_address, password: "password123" }
+
+          expect(response).to redirect_to(root_url)
+          expect(user.sessions.count).to eq(1)
+        end
+
+        it "rejects a wrong password" do
+          post session_path, params: { email_address: user.email_address, password: "wrong-password" }
+
+          expect(response).to redirect_to(new_session_path)
+          expect(user.sessions.count).to eq(0)
+        end
+
+        it "signs out" do
+          sign_in_as(user)
+
+          delete session_path
+
+          expect(response).to redirect_to(new_session_path)
+          expect(user.sessions.count).to eq(0)
+        end
+      end
+    RUBY
+  end
+end
+
 # `Dir[...]` is Ruby's `Dir.glob()` class method (shorthand syntax). Expands glob patterns into an array of matching file paths.
 #
 # `Rails.root.join('spec', 'support', '**', '*.rb')`:
