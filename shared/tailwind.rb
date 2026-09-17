@@ -2,8 +2,9 @@
 # Tailwind shared template - can be applied to new OR existing Rails apps.
 
 # GUARD 1: Skip if already installed
-if File.exist?("config/tailwind.config.js")
-  say "Tailwind already installed (config/tailwind.config.js found), skipping...", :yellow
+# Tailwind 4 (tailwindcss-rails 4.x) creates app/assets/tailwind/application.css and no config/tailwind.config.js.
+if File.exist?("config/tailwind.config.js") || File.exist?("app/assets/tailwind/application.css")
+  say "Tailwind already installed, skipping...", :yellow
   exit
 end
 
@@ -43,7 +44,7 @@ file "config/initializers/simple_form_tailwind.rb", <<~RUBY
   # Use this setup block to configure all options available in SimpleForm.
   SimpleForm.setup do |config|
     # Tailwind CSS configuration
-    config.wrappers :tailwind, class: 'mb-4' do |b|
+    config.wrappers :tailwind, class: "mb-4" do |b|
       b.use :html5
       b.use :placeholder
       b.optional :maxlength
@@ -51,15 +52,19 @@ file "config/initializers/simple_form_tailwind.rb", <<~RUBY
       b.optional :pattern
       b.optional :min_max
       b.optional :readonly
-      b.use :label, class: 'block text-sm font-medium text-gray-700 mb-1'
-      b.use :input, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', error_class: 'border-red-500'
-      b.use :error, wrap_with: { tag: 'p', class: 'mt-2 text-sm text-red-600' }
-      b.use :hint, wrap_with: { tag: 'p', class: 'mt-2 text-sm text-gray-500' }
+      b.use :label, class: "block text-sm font-medium text-gray-700 mb-1"
+      b.use :input, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50", error_class: "border-red-500"
+      b.use :error, wrap_with: { tag: "p", class: "mt-2 text-sm text-red-600" }
+      b.use :hint, wrap_with: { tag: "p", class: "mt-2 text-sm text-gray-500" }
     end
 
     config.default_wrapper = :tailwind
   end
 RUBY
+
+# Layout shell: <main> container, footer, Google Fonts <link> tags (sibling shared/layout.rb;
+# File.dirname(__FILE__) works for both a local path and a raw GitHub URL).
+apply File.join(File.dirname(__FILE__), "layout.rb")
 
 # STANDALONE MIGRATION SUPPORT
 main_templates = ["custom.rb"]

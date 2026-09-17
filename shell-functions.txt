@@ -1,42 +1,36 @@
 # RAILS 8 & 7 TEMPLATE SHELL FUNCTIONS (ZSH):
-# Rails 8 vs 7 template differences = (1) choice between native `authentication` setup vs `devise` in Rails 8 templates.
-# Check Rails version(s) on local machine `gem list rails` and specify in shell functions `rails <version> new...` e.g.`rails _8.1.2_ new...`
+# Rails 8 vs 7 template differences = (1) choice between native `authentication` setup vs `devise` in Rails 8 templates, (2) a Rails 8 API-only template (`rails8-api*`).
+# Check Rails version(s) on local machine `gem list '^rails$'` and specify in shell functions `rails <version> new...` e.g. `rails _8.1.3.1_ new...`
 
 # `.zshrc` BACKUP:
-# `~/.zshrc` = your terminal's "settings file".
-# Create backup (in case of bad code or syntax error in Rails template shell functions = terminal breaks when loading settings) `cp ~/.zshrc ~/.zshrc.rails.templates.v1.backup`.
-# Restore good settings using a new terminal tab `cp ~/.zshrc.rails.templates.v1.backup ~/.zshrc` = quick fix to recover the original broken terminal tab.
-# `~/.zshrc.backup` already exists with settings before adding Rails template shell functions.
-# Revert to original settings `cp ~/.zshrc.backup ~/.zshrc`
+# `~/.zshrc` = your terminal's "settings file". A syntax error in these functions can break every new terminal tab.
+# - If `~/.zshrc` is tracked in git (e.g. a dotfiles repo, or a symlink into one), git IS the backup:
+#   commit before adding the functions, and `git checkout` the file to recover. Never `cp` a backup over
+#   a symlinked `~/.zshrc`: that replaces the link with a plain file and silently detaches it from the repo.
+# - Otherwise, back it up first: `cp ~/.zshrc ~/.zshrc.rails.templates.backup`, and restore from a new tab
+#   with `cp ~/.zshrc.rails.templates.backup ~/.zshrc`.
 # `source ~/.zshrc` (or `. ~/.zshrc`) reloads Zsh shell configuration without starting a new shell.
-#
-# SUMMARY for reference:
-# To original (no functions)
-#cp ~/.zshrc.backup ~/.zshrc && source ~/.zshrc
-#
-# To rails templates (with functions)
-# cp ~/.zshrc.rails.templates.v1.backup ~/.zshrc && source ~/.zshrc
-#
-# To v3 later (future)
-# cp ~/.zshrc ~/.zshrc.v3.backup
 
 # SHELL FUNCTION LIST: (quick reference)
-# (Example usage: run `rails7-bootstrap app-name`)
+# (Example usage: run `rails8-bootstrap app-name`)
 #
 ###### RAILS 8: ######
 #### Rails 8 - interactive mode ####
 # `rails8-bootstrap` → # Bootstrap + asks for extras
 # `rails8-tailwind` → # Tailwind + asks for extras
 # `rails8-custom` → # Asks CSS + asks for extras
+# `rails8-api` → # JSON API (rails new --api) + asks for extras
 #
 #### Rails 8 - everything ####
 # `rails8-bootstrap-all` → # Bootstrap + all extras
 # `rails8-tailwind-all` → # Tailwind + all extras
+# `rails8-api-all` → # JSON API + all extras
 #
 #### Rails 8 - minimal ####
 # `rails8-bootstrap-min` → # Bootstrap only (no extras)
 # `rails8-tailwind-min` → # Tailwind only (no extras)
 # `rails8-min` → # No CSS, no extras (bare Rails 8)
+# `rails8-api-min` → # JSON API only (no extras)
 #
 ###### RAILS 7: ######
 #### Rails 7 - interactive mode ####
@@ -53,11 +47,12 @@
 # `rails7-tailwind-min` → # Tailwind only (no extras)
 # `rails7-min` → # No CSS, no extras (bare Rails 7)
 
-# Replace YOUR_USERNAME with your GitHub username.
-# Can replace RAILS_TEMPLATES_BASE with local path.
-export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates"
+# Replace YOUR_USERNAME with your GitHub username (the branch is part of the URL).
+# Can replace RAILS_TEMPLATES_BASE with a local clone's path, e.g. "$HOME/code/rails-startup-templates".
+export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rails-startup-templates/refs/heads/master"
 
-# If `DEVISE=true`, it defaults to Devise v4.9 instead of the latest version for Active Admin compatibility.
+# `DEVISE=true` installs the latest Devise (ActiveAdmin 3.5+ supports Devise 5).
+# `CLAUDE_CODE=true` scaffolds CLAUDE.md, .claude/settings.json, .claude/rules/ and a gitignored SETUP_NOTES.md.
 
 ##############################################
 # RAILS 8 - Interactive modes (prompts for extras)
@@ -65,20 +60,26 @@ export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rai
 
 rails8-bootstrap() {
   # Bootstrap + asks for extras
-  rails _8.1.2_ new "$1" -d postgresql \
+  rails _8.1.3.1_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
 rails8-tailwind() {
   # Tailwind + asks for extras
-  rails _8.1.2_ new "$1" -d postgresql \
+  rails _8.1.3.1_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
 rails8-custom() {
   # Asks CSS + asks for extras
-  rails _8.1.2_ new "$1" -d postgresql \
+  rails _8.1.3.1_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/custom.rb
+}
+
+rails8-api() {
+  # JSON API + asks for extras
+  rails _8.1.3.1_ new "$1" --api -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/api.rb
 }
 
 ##############################################
@@ -89,17 +90,24 @@ rails8-custom() {
 rails8-bootstrap-all() {
   # Bootstrap + all extras
   DEVISE=true AUTH=false RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
-  PAGINATION=true FRIENDLY_URLS=true ADMIN=true \
-  rails _8.1.2_ new "$1" -d postgresql \
+  PAGINATION=true FRIENDLY_URLS=true ADMIN=true CLAUDE_CODE=true \
+  rails _8.1.3.1_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
 rails8-tailwind-all() {
   # Tailwind + all extras
   DEVISE=true AUTH=false RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
-  PAGINATION=true FRIENDLY_URLS=true ADMIN=true \
-  rails _8.1.2_ new "$1" -d postgresql \
+  PAGINATION=true FRIENDLY_URLS=true ADMIN=true CLAUDE_CODE=true \
+  rails _8.1.3.1_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
+}
+
+rails8-api-all() {
+  # JSON API + all extras (Devise + JWT, testing, dev tools, security, pagination, Cloudinary, RubyLLM, Claude Code)
+  DEVISE=true TESTING=true DEV_TOOLS=true SECURITY=true PAGINATION=true IMAGE_UPLOAD_CLOUDINARY=true RUBY_LLM=true CLAUDE_CODE=true \
+  rails _8.1.3.1_ new "$1" --api -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/api.rb
 }
 
 ##############################################
@@ -109,25 +117,32 @@ rails8-tailwind-all() {
 rails8-bootstrap-min() {
   # Bootstrap only (no extras)
   DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
-  PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
-  rails _8.1.2_ new "$1" -d postgresql \
+  PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
+  rails _8.1.3.1_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
 rails8-tailwind-min() {
   # Tailwind only (no extras)
   DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
-  PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
-  rails _8.1.2_ new "$1" -d postgresql \
+  PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
+  rails _8.1.3.1_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
 rails8-min() {
   # No CSS, no extras (bare Rails 8)
   BOOTSTRAP=false TAILWIND=false DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false \
-  DEV_TOOLS=false SECURITY=false PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
-  rails _8.1.2_ new "$1" -d postgresql \
+  DEV_TOOLS=false SECURITY=false PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
+  rails _8.1.3.1_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/custom.rb
+}
+
+rails8-api-min() {
+  # JSON API only (no extras)
+  DEVISE=false TESTING=false DEV_TOOLS=false SECURITY=false PAGINATION=false IMAGE_UPLOAD_CLOUDINARY=false RUBY_LLM=false CLAUDE_CODE=false \
+  rails _8.1.3.1_ new "$1" --api -d postgresql \
+    -m $RAILS_TEMPLATES_BASE/rails-8/api.rb
 }
 
 ##############################################
@@ -159,7 +174,7 @@ rails7-custom() {
 rails7-bootstrap-all() {
   # Bootstrap + all extras
   DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
-  PAGINATION=true FRIENDLY_URLS=true ADMIN=true \
+  PAGINATION=true FRIENDLY_URLS=true ADMIN=true CLAUDE_CODE=true \
   rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/bootstrap.rb
 }
@@ -167,7 +182,7 @@ rails7-bootstrap-all() {
 rails7-tailwind-all() {
   # Tailwind + all extras
   DEVISE=true RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
-  PAGINATION=true FRIENDLY_URLS=true ADMIN=true \
+  PAGINATION=true FRIENDLY_URLS=true ADMIN=true CLAUDE_CODE=true \
   rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
 }
@@ -179,7 +194,7 @@ rails7-tailwind-all() {
 rails7-bootstrap-min() {
   # Bootstrap only (no extras)
   DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
-  PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
+  PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
   rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/bootstrap.rb
 }
@@ -187,7 +202,7 @@ rails7-bootstrap-min() {
 rails7-tailwind-min() {
   # Tailwind only (no extras)
   DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
-  PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
+  PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
   rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/tailwind.rb
 }
@@ -195,7 +210,7 @@ rails7-tailwind-min() {
 rails7-min() {
   # No CSS, no extras (bare Rails 7)
   BOOTSTRAP=false TAILWIND=false DEVISE=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false \
-  DEV_TOOLS=false SECURITY=false PAGINATION=false FRIENDLY_URLS=false ADMIN=false \
+  DEV_TOOLS=false SECURITY=false PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
   rails _7.1.6_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-7/custom.rb
 }

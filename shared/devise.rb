@@ -23,30 +23,31 @@ end
 # Fresh apps: main template already added gem → this skips.
 gemfile = File.read("Gemfile")
 
-unless gemfile.match?(/^gem.*['"]devise['"]/)
-  # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
-  devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
-
-  gem_line = if devise_choice == "y"
-    'gem "devise", "~> 4.9"'
-  else
-    'gem "devise"'
-  end
-
+unless gemfile.match?(/^\s*gem ["']devise["']/)
+  # No version pin: ActiveAdmin 3.5+ supports Devise 5.
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
-      #{gem_line}
+      gem "devise"
 
     RUBY
   end
 
-  say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
+  say("Devise added.", :green)
 
   # `bundle install` ONLY if it's needed (bundle check fails → bundle install).
   # `bundle check` compares Gemfile vs Gemfile.lock to see if they're the same.
   # `system()` method runs shell command and returns true/false. Returns `true` if exit code 0 (success), `false` otherwise. `system()` always preferred for conditionals (e.g. unless system(...)) as it returns boolean.
   # `run` method typically runs shell command, prints output, continues. If it runs a shell command that returns a success code (shell exits 0 → returns empty string ("") = truthy vs shell exits 1 → returns nil = falsy), ultimately returning true/false, then `run` can be used in conditionals too. However, `system()` is the preferred method for conditional logic as by default it returns a boolean.
   # For reference, the line's logic below is the same as `run "bundle check" || run "bundle install"`
+  run "bundle install" unless system("bundle check")
+end
+
+# API-only apps authenticate with JWTs (shared/devise_jwt.rb): add devise-jwt when missing.
+api_only = File.exist?("config/application.rb") && File.read("config/application.rb").include?("config.api_only = true")
+if api_only && !File.read("Gemfile").match?(/^\s*gem ["']devise-jwt["']/)
+  inject_into_file "Gemfile", after: /^\s*gem ["']devise["'].*\n/ do
+    "gem \"devise-jwt\"\n"
+  end
   run "bundle install" unless system("bundle check")
 end
 
@@ -66,31 +67,49 @@ else
   generate("devise", "User")
 end
 
-# ApplicationController: Add optional global auth
-inject_into_file "app/controllers/application_controller.rb", after: "class ApplicationController < ActionController::Base\n" do
-  <<~RUBY
-    before_action :authenticate_user!
-  RUBY
-end
+if api_only
+  # API apps: JWT authentication instead of views, sessions and redirects.
+  apply File.join(File.dirname(__FILE__), "devise_jwt.rb")
+else
+  # ApplicationController: require sign-in everywhere (pages opt out below).
+  app_controller = "app/controllers/application_controller.rb"
+  unless File.read(app_controller).match?(/^\s*before_action :authenticate_user!/)
+    inject_into_file app_controller, after: "class ApplicationController < ActionController::Base\n" do
+      <<~RUBY
+        before_action :authenticate_user!
+      RUBY
+    end
+  end
 
-# Devise views
-generate("devise:views")
+  # PagesController#home stays public. The main templates write PagesController without
+  # this line because `skip_before_action :authenticate_user!` raises ArgumentError in any
+  # app where Devise hasn't defined that callback.
+  pages_controller = "app/controllers/pages_controller.rb"
+  if File.exist?(pages_controller) && !File.read(pages_controller).match?(/^\s*skip_before_action :authenticate_user!/)
+    inject_into_file pages_controller, after: "class PagesController < ApplicationController\n" do
+      "  skip_before_action :authenticate_user!, only: :home\n\n"
+    end
+  end
 
-# Style cancel account link → Bootstrap button (only works if Bootstrap is installed)
-if File.exist?("app/views/devise/registrations/edit.html.erb") && File.read("Gemfile").include?("gem \"bootstrap\"")
-  link_to = <<~HTML
-    <p>Unhappy? <%= link_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete %></p>
-  HTML
+  # Devise views
+  generate("devise:views")
 
-  button_to = <<~HTML
-    <div class="d-flex align-items-center">
-      <div>Unhappy?</div>
-      <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete, class: "btn btn-link" %>
-    </div>
-  HTML
+  # Style cancel account link → Bootstrap button (only works if Bootstrap is installed)
+  if File.exist?("app/views/devise/registrations/edit.html.erb") && File.read("Gemfile").include?("gem \"bootstrap\"")
+    link_to = <<~HTML
+      <p>Unhappy? <%= link_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete %></p>
+    HTML
 
-  gsub_file("app/views/devise/registrations/edit.html.erb", link_to, button_to)
-  say "Updated Devise cancel button to Bootstrap style.", :green
+    button_to = <<~HTML
+      <div class="d-flex align-items-center">
+        <div>Unhappy?</div>
+        <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete, class: "btn btn-link" %>
+      </div>
+    HTML
+
+    gsub_file("app/views/devise/registrations/edit.html.erb", link_to, button_to)
+    say "Updated Devise cancel button to Bootstrap style.", :green
+  end
 end
 
 # STANDALONE MIGRATION SUPPORT
@@ -103,7 +122,7 @@ end
 # `any?` short-circuits on the first truthy block result.
 # `Regexp.union` builds one Regexp from multiple patterns by joining them with `|` (regex alternation), so it matches any of the inputs. `|` acts as logical OR—tries left-to-right, takes first match. `Regexp.union` inputs could be strings, Regexps, or an array.
 # `Regexp.union(['bootstrap.rb', 'custom.rb', 'tailwind.rb'])` → /bootstrap\.rb|custom\.rb|tailwind\.rb/
-main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
+main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb", "api.rb"]
 in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }
 
 if in_main_template

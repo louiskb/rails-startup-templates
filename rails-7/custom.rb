@@ -32,6 +32,17 @@ inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
 end
 
+# json < 3: json 3.0 (2026-09-07) rejects the `quirks_mode:` option Rails 7.1 passes to
+# JSON.generate, so writing the session cookie raises ArgumentError and every page 500s.
+# Rails 7.1 is end-of-life and won't get the fix (rails/rails#58601, for 8.x): keep this pin.
+inject_into_file "Gemfile", before: "group :development, :test do" do
+  <<~RUBY
+    # Rails 7.1 is incompatible with json 3 (rails/rails#58601 is 8.x only)
+    gem "json", "< 3"
+
+  RUBY
+end
+
 # Add simple_form gem
 inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
@@ -44,13 +55,6 @@ end
 inject_into_file "Gemfile", after: "group :development, :test do" do
   "\n  gem \"dotenv-rails\""
 end
-
-# Layout viewport (works for all)
-gsub_file(
-  "app/views/layouts/application.html.erb",
-  '<meta name="viewport" content="width=device=device-width, initial-scale=1">',
-  '<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">'
-)
 
 # Vanilla flashes (Tailwind/Bootstrap/vanilla neutral)
 file "app/views/shared/_flashes.html.erb", <<~HTML
@@ -102,10 +106,18 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
   when "b"
     if should_install?("bootstrap", "Install Bootstrap? (y/n)")
       say "Bootstrap installing...", :cyan
+      # sprockets-rails: Rails 7.1 apps already have it; a second copy is a Bundler/DuplicatedGem offense.
+      unless File.read("Gemfile").match?(/^\s*gem ["']sprockets-rails["']/)
+        inject_into_file "Gemfile", before: "group :development, :test do" do
+          <<~RUBY
+            gem "sprockets-rails"
+          RUBY
+        end
+      end
+
       # Core Bootstrap gems
       inject_into_file "Gemfile", before: "group :development, :test do" do
         <<~RUBY
-          gem "sprockets-rails"
           gem "bootstrap", "~> 5.3"
           gem "autoprefixer-rails"
           gem "font-awesome-sass", "~> 6.1"
@@ -133,44 +145,19 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
   end
 end
 
-# devise
+# devise (no version pin: ActiveAdmin 3.5+ supports Devise 5)
 if should_install?("devise", "Install Devise? (y/n)")
-  # Add devise gem to Gemfile (before `bundle install`)
-  # Note the blank line inside the heredoc to keep "Gemfile" formatting clean.
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "devise"
 
-  # Default to Devise v4.9 if `DEVISE=true` (ENV variable set in shell functions) (non-interactive).
-  if ENV.fetch("DEVISE", "") == "true"
-    inject_into_file "Gemfile", before: "group :development, :test do" do
-      <<~RUBY
-        gem "devise", "~> 4.9"
-
-      RUBY
-    end
-    say("`DEVISE=true` detected: Installing Devise v4.9 for Active Admin compatibility.", :green)
-  else
-    # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
-    devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
-
-    gem_line = if devise_choice == "y"
-      'gem "devise", "~> 4.9"'
-    else
-      'gem "devise"'
-    end
-
-    inject_into_file "Gemfile", before: "group :development, :test do" do
-      <<~RUBY
-        #{gem_line}
-
-      RUBY
-    end
-
-    say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
+    RUBY
   end
 end
 
-# admin (devise v4.9 required before installation) - an admin dashboard for CRUD operations on models.
-if File.read("Gemfile").include?('gem "devise", "~> 4.9"')
-  if should_install?("admin", "Install Active Admin (devise required)? (y/n)")
+# admin (requires Devise) - an admin dashboard for CRUD operations on models.
+if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
+  if should_install?("admin", "Install Active Admin (uses Devise)? (y/n)")
     inject_into_file "Gemfile", before: "group :development, :test do" do
       <<~RUBY
         gem "activeadmin"
@@ -239,7 +226,9 @@ end
 # navbar (only asks if Bootstrap is added)
 if File.read("Gemfile").include?('gem "bootstrap"')
   if should_install?("navbar", "Install NavBar? (y/n)")
-    run "curl -L https://raw.githubusercontent.com/lewagon/awesome-navbars/master/templates/_navbar_wagon.html.erb > app/views/shared/_navbar.html.erb"
+    # Placeholder = "navbar chosen" flag. shared/navbar.rb (in `after_bundle`, after the auth
+    # modules) replaces it with links for whichever auth the app ended up with.
+    file "app/views/shared/_navbar.html.erb", "<%# navbar placeholder: shared/navbar.rb replaces this file %>\n"
   end
 end
 
@@ -274,6 +263,10 @@ if should_install?("security", "Install security? (y/n)")
   end
 end
 
+# claude_code: no gem. The answer is kept in a local variable, which the `after_bundle`
+# block below closes over, so no marker file ends up in the initial commit.
+install_claude_code = should_install?("claude_code", "Set up Claude Code (CLAUDE.md, .claude/ settings and rules)? (y/n)")
+
 # STEP 3: after_bundle (same structure)
 
 after_bundle do
@@ -292,19 +285,30 @@ after_bundle do
   # Pages Controller
   run "rm app/controllers/pages_controller.rb"
   file "app/controllers/pages_controller.rb", <<~RUBY
+    # Public pages. Auth modules add their own public-access line here
+    # (Devise: skip_before_action; Rails 8 authentication: allow_unauthenticated_access).
     class PagesController < ApplicationController
-      skip_before_action :authenticate_user!, only: [ :home ]
-      def home; end
+      def home
+      end
     end
   RUBY
 
   # Routes
   route 'root to: "pages#home"'
 
-  # Gitignore + common setup
+  # Gitignore
   append_file ".gitignore", <<~TXT
-    # Ignore .env file containing credentials.
+
+    # Secrets: never commit these. Before a first push, also check .mcp.json: MCP configs
+    # can embed API keys. Reference them as ${VAR} instead.
+    # (Rails already ignores config/master.key and config/credentials/*.key.)
     .env*
+    !.env.example
+
+    # Claude Code: personal machine-local settings (.claude/settings.json IS shared and committed)
+    .claude/settings.local.json
+
+    # Editor and OS files
     *.swp
     .DS_Store
   TXT
@@ -342,7 +346,7 @@ after_bundle do
   # Initialize Git and make first commit.
   git :init
   git add: "."
-  git commit: "-m 'initial commit: new rails app setup with Custom template.'"
+  git commit: "-m 'chore: initial commit from the Custom template'"
 
   # APPLY shared templates ONLY if their gems were added during interactive setup.
   # TODO: Add more conditional gem checks for each new shared template:
@@ -458,13 +462,39 @@ after_bundle do
     git commit: "-m 'feat: install security.'"
   end
 
+  # shared/claude_code.rb: last module, so it can see everything installed above.
+  if install_claude_code
+    apply source_path("shared/claude_code.rb")
+
+    # Git
+    git add: "."
+    git commit: "-m 'chore: add Claude Code project setup'"
+  end
+
   # Run all migrations towards the end of `after_bundle`.
   rails_command "db:migrate db:seed"
 
-  # Git. Guarded: with no modules there may be nothing new to commit, and an
-  # empty `git commit` exits 1 and aborts the template before the final message.
+  # Git. Guarded: with no modules there may be nothing new to commit, and an empty
+  # `git commit` exits 1 and aborts the template before the final message.
   git add: "."
-  run "git diff --cached --quiet || git commit -m 'feat: add migration after initial setup.'"
+  run "git diff --cached --quiet || git commit -m 'chore(db): run migrations after module setup'"
+
+  # RuboCop: autocorrect generator output so the app passes its own lint. Rails 7.1 has no
+  # bin/rubocop, and RuboCop is only in the bundle with the Dev Tools module.
+  if File.read("Gemfile.lock").match?(/^    rubocop \(/)
+    run "bundle exec rubocop -a > /dev/null || true"
+    # Le Wagon's config also flags ActiveAdmin's generated `end # content`; RuboCop calls that fix
+    # unsafe, but it only drops a comment.
+    run "bundle exec rubocop -A --only Style/CommentedKeyword > /dev/null || true"
+    git add: "."
+    run "git diff --cached --quiet || git commit -m 'style: autocorrect RuboCop offenses in generated code'"
+  end
+
+  # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
+  # Last on purpose: every commit above is made before the hook exists.
+  apply source_path("shared/conventional_commits.rb")
+  git add: "."
+  git commit: "-m 'chore: enforce conventional commits with a commit-msg hook'"
 
   say "✅ Rails 7 Custom template installation complete! 🚀🔥", :green
 end

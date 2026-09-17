@@ -2,8 +2,12 @@
 # Bootstrap shared template - can be applied to new OR existing Rails apps.
 
 # GUARD 1: Skip if already installed
-if File.exist?("app/assets/stylesheets") && Dir.glob("app/assets/stylesheets/*bootstrap*").any?
-  say "Bootstrap already installed (stylesheets found), skipping...", :yellow
+# Le Wagon's stylesheets keep their Bootstrap variables in config/, so the old top-level
+# `*bootstrap*` glob never matched, and a re-run wiped app/assets/stylesheets.
+application_js = "app/javascript/application.js"
+if File.exist?("app/assets/stylesheets/config/_bootstrap_variables.scss") ||
+    (File.exist?(application_js) && File.read(application_js).include?('import "bootstrap"'))
+  say "Bootstrap already installed (Le Wagon stylesheets or a bootstrap import found), skipping...", :yellow
   exit
 end
 
@@ -13,10 +17,18 @@ gemfile = File.read("Gemfile")
 unless gemfile.match?(/^gem.*['"]bootstrap['"]/)
   say "Adding Bootstrap gems...", :cyan
 
+  # sprockets-rails: Rails 7.1 apps already have it; a second copy is a Bundler/DuplicatedGem offense.
+  unless File.read("Gemfile").match?(/^\s*gem ["']sprockets-rails["']/)
+    inject_into_file "Gemfile", before: "group :development, :test do" do
+      <<~RUBY
+        gem "sprockets-rails"
+      RUBY
+    end
+  end
+
   # Core Bootstrap gems
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
-      gem "sprockets-rails"
       gem "bootstrap", "~> 5.3"
       gem "autoprefixer-rails"
       gem "font-awesome-sass", "~> 6.1"
@@ -34,17 +46,31 @@ end
 
 # Assets (Le Wagon stylesheets)
 run "rm -rf app/assets/stylesheets"
-run "rm -rf vendor"
+# `vendor/` is NOT removed here (the main bootstrap templates do it in a brand-new app, before
+# anything lives there). By now importmap-rails keeps pinned JavaScript in vendor/javascript.
 run "curl -L https://github.com/lewagon/rails-stylesheets/archive/rails-8.zip > stylesheets.zip"
 run "unzip stylesheets.zip -d app/assets && rm -f stylesheets.zip && rm -f app/assets/rails-stylesheets-rails-8/README.md"
 run "mv app/assets/rails-stylesheets-rails-8 app/assets/stylesheets"
 
-# Sprockets manifest
+# Sprockets manifest. Never overwrite an existing one: custom.rb writes it before bundling
+# and importmap-rails then appends its JavaScript links, which an overwrite would drop
+# (every page then raised AssetNotPrecompiledError).
 run "mkdir -p app/assets/config"
-file "app/assets/config/manifest.js", <<~JS
-  //= link_tree ../images
-  //= link_directory ../stylesheets .css
-JS
+unless File.exist?("app/assets/config/manifest.js")
+  file "app/assets/config/manifest.js", <<~JS
+    //= link_tree ../images
+    //= link_directory ../stylesheets .css
+  JS
+end
+
+# importmap serves app/javascript and vendor/javascript through Sprockets.
+if File.exist?("config/importmap.rb") && !File.read("app/assets/config/manifest.js").include?("../../javascript")
+  run "mkdir -p vendor/javascript"
+  append_file "app/assets/config/manifest.js", <<~JS
+    //= link_tree ../../javascript .js
+    //= link_tree ../../../vendor/javascript .js
+  JS
+end
 
 # Layout
 gsub_file(
@@ -79,6 +105,10 @@ append_file "app/assets/config/manifest.js", <<~JS
   //= link popper.js
   //= link bootstrap.min.js
 JS
+
+# Layout shell: <main> container, footer, Google Fonts <link> tags (sibling shared/layout.rb;
+# File.dirname(__FILE__) works for both a local path and a raw GitHub URL).
+apply File.join(File.dirname(__FILE__), "layout.rb")
 
 # STANDALONE MIGRATION SUPPORT
 main_templates = ["custom.rb"]

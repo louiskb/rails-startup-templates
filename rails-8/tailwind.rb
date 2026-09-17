@@ -37,6 +37,19 @@ inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
 end
 
+# json < 3: json 3.0 (2026-09-07) made JSON.parse options keyword-only, and Rails 8.1.3.1
+# still passes them positionally. Decoding the session cookie raises ArgumentError, so
+# every sign-up/sign-in POST in a fresh app 500s. Fixed upstream in rails/rails#58601
+# (merged, unreleased as of 2026-09-17): remove this pin once the Rails version in
+# shell-functions.txt includes it.
+inject_into_file "Gemfile", before: "group :development, :test do" do
+  <<~RUBY
+    # Remove once Rails includes rails/rails#58601 (json 3.0 compatibility)
+    gem "json", "< 3"
+
+  RUBY
+end
+
 # Gemfile
 inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
@@ -49,13 +62,6 @@ end
 inject_into_file "Gemfile", after: "group :development, :test do" do
   "\n  gem \"dotenv-rails\""
 end
-
-# Layout
-gsub_file(
-  "app/views/layouts/application.html.erb",
-  '<meta name="viewport" content="width=device-width, initial-scale=1">',
-  '<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">'
-)
 
 # Flashes (Tailwind)
 # The standard "X" close icon from Heroicons https://heroicons.com/ (Tailwind Labs' official icon set).
@@ -84,6 +90,9 @@ inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
   HTML
 end
 
+# Layout shell: <main> container, footer, Google Fonts <link> tags (shared/layout.rb)
+apply source_path("shared/layout.rb")
+
 # README
 markdown_readme_content = <<~MARKDOWN
   Rails app generated with [louiskb/rails-startup-templates](https://github.com/louiskb/rails-startup-templates), created by [Louis Bourne](https://louisbourne.me).
@@ -105,15 +114,16 @@ environment generators
 # User says YES → add gem to Gemfile
 # User says NO → skip (don't add gem)
 
-# Default to Devise v4.9 if `DEVISE=true` (ENV variable set in shell functions) (non-interactive).
+# Devise without prompts when `DEVISE=true` (the `-all` shell functions). No version pin:
+# ActiveAdmin 3.5+ supports Devise 5 (`DEVISE = ">= 4.0", "< 6"` in its dependency check).
 if ENV.fetch("DEVISE", "") == "true"
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
-      gem "devise", "~> 4.9"
+      gem "devise"
 
     RUBY
   end
-  say("`DEVISE=true` detected: Installing Devise v4.9 for Active Admin compatibility.", :green)
+  say("`DEVISE=true` detected: installing Devise.", :green)
 end
 
 # Authentication choice (first interactive prompt)
@@ -123,35 +133,33 @@ if should_install?("auth", "Install authentication? (y/n)")
 
   case auth_choice
   when "d"
-    if should_install?("devise", "Install Devise? (y/n)")
-      devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
-
-      gem_line = if devise_choice == "y"
-        'gem "devise", "~> 4.9"'
-      else
-        'gem "devise"'
-      end
-
+    # devise (skipped when DEVISE=true already added it above)
+    unless File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
       inject_into_file "Gemfile", before: "group :development, :test do" do
         <<~RUBY
-          #{gem_line}
+          gem "devise"
 
         RUBY
       end
-
-      say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
+      say("Devise added.", :green)
     end
   when "r"
     say "Rails 8 native Authentication installing...", :cyan
-    file "authentication.txt", "confirm"
+    if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
+      # DEVISE=true already added Devise. shared/authentication.rb would see it and `exit`,
+      # which silently ends `rails new` partway through `after_bundle`.
+      say "Devise is already being installed (DEVISE=true): skipping Rails 8 authentication.", :yellow
+    else
+      file "authentication.txt", "confirm"
+    end
   else
     say "No Authentication installed.", :yellow
   end
 end
 
-# admin (devise v4.9 required before installation)
-if File.read("Gemfile").include?('gem "devise", "~> 4.9"')
-  if should_install?("admin", "Install Active Admin (devise required)? (y/n)")
+# admin (requires Devise) - an admin dashboard for CRUD operations on models.
+if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
+  if should_install?("admin", "Install Active Admin (uses Devise)? (y/n)")
     inject_into_file "Gemfile", before: "group :development, :test do" do
       <<~RUBY
         gem "activeadmin"
@@ -248,6 +256,10 @@ if should_install?("security", "Install security? (y/n)")
   end
 end
 
+# claude_code: no gem. The answer is kept in a local variable, which the `after_bundle`
+# block below closes over, so no marker file ends up in the initial commit.
+install_claude_code = should_install?("claude_code", "Set up Claude Code (CLAUDE.md, .claude/ settings and rules)? (y/n)")
+
 # STEP 3: AFTER BUNDLE
 
 after_bundle do
@@ -266,7 +278,7 @@ after_bundle do
     # Use this setup block to configure all options available in SimpleForm.
     SimpleForm.setup do |config|
       # Tailwind CSS configuration
-      config.wrappers :tailwind, class: 'mb-4' do |b|
+      config.wrappers :tailwind, class: "mb-4" do |b|
         b.use :html5
         b.use :placeholder
         b.optional :maxlength
@@ -274,10 +286,10 @@ after_bundle do
         b.optional :pattern
         b.optional :min_max
         b.optional :readonly
-        b.use :label, class: 'block text-sm font-medium text-gray-700 mb-1'
-        b.use :input, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', error_class: 'border-red-500'
-        b.use :error, wrap_with: { tag: 'p', class: 'mt-2 text-sm text-red-600' }
-        b.use :hint, wrap_with: { tag: 'p', class: 'mt-2 text-sm text-gray-500' }
+        b.use :label, class: "block text-sm font-medium text-gray-700 mb-1"
+        b.use :input, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50", error_class: "border-red-500"
+        b.use :error, wrap_with: { tag: "p", class: "mt-2 text-sm text-red-600" }
+        b.use :hint, wrap_with: { tag: "p", class: "mt-2 text-sm text-gray-500" }
       end
 
       config.default_wrapper = :tailwind
@@ -290,9 +302,9 @@ after_bundle do
   # Pages Controller
   run "rm app/controllers/pages_controller.rb"
   file "app/controllers/pages_controller.rb", <<~RUBY
+    # Public pages. Auth modules add their own public-access line here
+    # (Devise: skip_before_action; Rails 8 authentication: allow_unauthenticated_access).
     class PagesController < ApplicationController
-      skip_before_action :authenticate_user!, only: [ :home ]
-
       def home
       end
     end
@@ -303,10 +315,17 @@ after_bundle do
 
   # Gitignore
   append_file ".gitignore", <<~TXT
-    # Ignore .env file containing credentials.
-    .env*
 
-    # Ignore Mac and Linux files system files
+    # Secrets: never commit these. Before a first push, also check .mcp.json: MCP configs
+    # can embed API keys. Reference them as ${VAR} instead.
+    # (Rails already ignores config/master.key and config/credentials/*.key.)
+    .env*
+    !.env.example
+
+    # Claude Code: personal machine-local settings (.claude/settings.json IS shared and committed)
+    .claude/settings.local.json
+
+    # Editor and OS files
     *.swp
     .DS_Store
   TXT
@@ -343,7 +362,7 @@ after_bundle do
   # Initialize Git and make first commit
   git :init
   git add: "."
-  git commit: "-m 'initial commit: new rails app setup with Tailwind template.'"
+  git commit: "-m 'chore: initial commit from the Tailwind template'"
 
   gemfile = File.read("Gemfile")
 
@@ -428,11 +447,37 @@ after_bundle do
     git commit: "-m 'feat: install security.'"
   end
 
+  # shared/claude_code.rb: last module, so it can see everything installed above.
+  if install_claude_code
+    apply source_path("shared/claude_code.rb")
+
+    # Git
+    git add: "."
+    git commit: "-m 'chore: add Claude Code project setup'"
+  end
+
   # Run all migrations towards the end of `after_bundle`
   rails_command "db:migrate db:seed"
 
+  # Git. Guarded: with no modules there may be nothing new to commit, and an empty
+  # `git commit` exits 1 and aborts the template before the final message.
   git add: "."
-  git commit: "-m 'feat: add migration after initial setup.'"
+  run "git diff --cached --quiet || git commit -m 'chore(db): run migrations after module setup'"
+
+  # RuboCop: autocorrect generator output the template doesn't write (simple_form and
+  # Devise initializers, …) so a new app passes its own `bin/rubocop` and CI lint job.
+  # Safe corrections only (`-a`): every offense in a fresh app is marked safe.
+  if File.exist?("bin/rubocop")
+    run "bin/rubocop -a > /dev/null || true"
+    git add: "."
+    run "git diff --cached --quiet || git commit -m 'style: autocorrect RuboCop offenses in generated code'"
+  end
+
+  # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
+  # Last on purpose: every commit above is made before the hook exists.
+  apply source_path("shared/conventional_commits.rb")
+  git add: "."
+  git commit: "-m 'chore: enforce conventional commits with a commit-msg hook'"
 
   say "✅ Rails 8 Tailwind template installation complete! 🚀🔥", :green
 end

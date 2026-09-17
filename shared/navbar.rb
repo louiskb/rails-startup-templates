@@ -1,25 +1,87 @@
 # shared/navbar.rb
-# Shared NavBar Template
+# Shared NavBar Template (Bootstrap)
+# Writes app/views/shared/_navbar.html.erb: Le Wagon's navbar structure and `navbar-lewagon`
+# styles, with auth links for the authentication the app actually has (Devise, Rails 8
+# authentication, or none). Le Wagon's own partial calls Devise helpers unconditionally,
+# which crashed every page of an app without Devise (NoMethodError in Pages#home).
 
 # TWO USE CASES:
-# 1. Fresh app: called from main template INSIDE `after_bundle` (gems already added/bundles by main template).
+# 1. Fresh app: called from main template INSIDE `after_bundle` (after the auth modules).
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/navbar.rb`).
 
-# STANDALONE SUPPORT: If the `_navbar.html.erb` partial does not exist, create a new one.
-# Fresh apps: main template already added NavBar partial → this skips.
-if !File.exist?("app/views/shared/_navbar.html.erb")
-  run "curl -L https://raw.githubusercontent.com/lewagon/awesome-navbars/master/templates/_navbar_wagon.html.erb > app/views/shared/_navbar.html.erb"
+navbar_path = "app/views/shared/_navbar.html.erb"
+layout_path = "app/views/layouts/application.html.erb"
+routes = File.exist?("config/routes.rb") ? File.read("config/routes.rb") : ""
+home_path = routes.match?(/^\s*root /) ? "root_path" : %("/")
+
+nav_item = ->(link) { [ %(<li class="nav-item">), %(  #{link}), "</li>" ] }
+
+# Lines inside <ul class="navbar-nav">, relative indentation only.
+items = nav_item.call(%(<%= link_to "Home", #{home_path}, class: "nav-link" %>))
+
+user_model = File.exist?("app/models/user.rb") ? File.read("app/models/user.rb") : ""
+
+# Devise links need a Devise User (an app whose only Devise model is ActiveAdmin's AdminUser has
+# no user_signed_in? helper), and Sign up needs :registerable.
+if File.exist?("config/initializers/devise.rb") && user_model.match?(/^\s*devise /)
+  items += [ "<% if user_signed_in? %>" ]
+  items += nav_item.call(%(<%= link_to "Log out", destroy_user_session_path, data: { turbo_method: :delete }, class: "nav-link" %>)).map { |line| "  #{line}" }
+  items += [ "<% else %>" ]
+  items += nav_item.call(%(<%= link_to "Log in", new_user_session_path, class: "nav-link" %>)).map { |line| "  #{line}" }
+  if user_model.include?(":registerable")
+    items += nav_item.call(%(<%= link_to "Sign up", new_user_registration_path, class: "nav-link" %>)).map { |line| "  #{line}" }
+  end
+  items += [ "<% end %>" ]
+elsif File.exist?("app/controllers/concerns/authentication.rb")
+  items += [ "<% if authenticated? %>" ]
+  items += nav_item.call(%(<%= link_to "Log out", session_path, data: { turbo_method: :delete }, class: "nav-link" %>)).map { |line| "  #{line}" }
+  items += [ "<% else %>" ]
+  items += nav_item.call(%(<%= link_to "Log in", new_session_path, class: "nav-link" %>)).map { |line| "  #{line}" }
+  if routes.include?("resource :registration")
+    items += nav_item.call(%(<%= link_to "Sign up", new_registration_path, class: "nav-link" %>)).map { |line| "  #{line}" }
+  end
+  items += [ "<% end %>" ]
 end
 
-# GUARD 1: Skip if navbar is already fully integrated throughout the app.
-layouts_application = File.read("app/views/layouts/application.html.erb")
-if !layouts_application.include?('<%= render "shared/navbar" %>')
-  say "Integrating NavBar throughout the app..."
+navbar_html = <<~ERB
+  <nav class="navbar navbar-expand-sm navbar-lewagon border-bottom">
+    <div class="container-fluid">
+      <%= link_to Rails.application.class.module_parent_name.underscore.titleize, #{home_path}, class: "navbar-brand" %>
 
-  inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
-    <<~HTML
-      <%= render "shared/navbar" %>
-    HTML
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav">
+  ITEMS
+        </ul>
+      </div>
+    </div>
+  </nav>
+ERB
+navbar_html = navbar_html.sub("ITEMS\n", items.map { |line| "        #{line}\n" }.join)
+
+if !File.exist?(navbar_path) || File.read(navbar_path).start_with?("<%# navbar placeholder")
+  create_file navbar_path, navbar_html, force: true
+else
+  say "Custom navbar partial found, leaving it unchanged.", :yellow
+end
+
+# Le Wagon's components/_navbar.scss hardcodes a white background, which stays white under
+# Bootstrap's data-bs-theme="dark". Keep white in light mode; follow the theme in dark mode.
+navbar_scss = "app/assets/stylesheets/components/_navbar.scss"
+if File.exist?(navbar_scss) && !File.read(navbar_scss).include?("data-bs-theme")
+  gsub_file navbar_scss, "  background: white;\n",
+    "  background: white;\n\n  [data-bs-theme=\"dark\"] & {\n    background: var(--bs-body-bg);\n  }\n"
+end
+
+# Render it in the layout: replace shared/layout.rb's marker line, or inject after <body>.
+if File.exist?(layout_path) && !File.read(layout_path).include?('<%= render "shared/navbar"')
+  if File.read(layout_path).match?(/^[ \t]*<%# Navbar:.*%>\n/)
+    gsub_file layout_path, /^([ \t]*)<%# Navbar:.*%>\n/, %(\\1<%= render "shared/navbar" %>\n)
+  else
+    inject_into_file layout_path, %(    <%= render "shared/navbar" %>\n), after: /<body[^>]*>\n/
   end
 end
 

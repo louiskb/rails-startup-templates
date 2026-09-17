@@ -8,6 +8,8 @@
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/security.rb`).
 
 gemfile = File.read("Gemfile")
+# API-only apps: no CSP (it governs HTML pages) and API-shaped rate limits.
+api_only = File.exist?("config/application.rb") && File.read("config/application.rb").include?("config.api_only = true")
 
 # GUARD 1: Skip if Security Template is already installed.
 if gemfile.match?(/^gem.*['"]secure_headers['"]/) && gemfile.match?(/^gem.*['"]rack-attack['"]/) && File.exist?("config/initializers/rack_attack.rb")
@@ -101,7 +103,9 @@ csp_file = "config/initializers/content_security_policy.rb"
 # contains "content_security_policy_nonce_generator" — so we must key the "already
 # configured" check off a marker unique to OUR config (`SecureRandom.base64(16)`),
 # otherwise the default file matches and we never overwrite it.
-if !File.exist?(csp_file) || !File.read(csp_file).include?("SecureRandom.base64(16)")
+if api_only
+  say "API-only app: skipping the Content Security Policy (it governs HTML pages).", :yellow
+elsif !File.exist?(csp_file) || !File.read(csp_file).include?("SecureRandom.base64(16)")
   say "Configuring Rails Content Security Policy (importmap-safe nonce)...", :cyan
   create_file csp_file, <<~RUBY, force: true
     Rails.application.configure do
@@ -140,26 +144,56 @@ end
 unless File.exist?("config/initializers/rack_attack.rb")
   say "Creating rack-attack rate limiting...", :cyan
 
-  create_file "config/initializers/rack_attack.rb", <<~RUBY
-    class Rack::Attack
-      # Throttle login attempts (brute force protection)
-      throttle("req/ip login", limit: 5, period: 1.minute) do |req|
-        req.ip if req.path == "/users/sign_in" && req.post?
-      end
+  if api_only
+    create_file "config/initializers/rack_attack.rb", <<~RUBY
+      # Rate limiting. Throttled requests get a 429 in the API error shape.
+      # Rack::Attack counts in Rails.cache: Rails 8 development uses an in-memory store
+      # (throttles apply per server process and reset on restart); test uses :null_store.
+      class Rack::Attack
+        # Brute-force protection on sign-in
+        throttle("logins/ip", limit: 10, period: 1.minute) do |req|
+          req.ip if req.post? && req.path.delete_suffix(".json") == "/api/v1/users/sign_in"
+        end
 
-      # Throttle API requests
-      throttle("req/ip api", limit: 100, period: 1.minute) do |req|
-        req.ip if req.path.start_with?("/api")
-      end
+        # Sign-up spam
+        throttle("signups/ip", limit: 10, period: 1.hour) do |req|
+          req.ip if req.post? && req.path.delete_suffix(".json") == "/api/v1/users"
+        end
 
-      # Block obvious bad bots
-      blocklist("bad bots") do |req|
-        req.user_agent.to_s.match?(/ahrefs|semrush|mj12bot/i)
-      end
-    end
-  RUBY
+        # Everything else under /api
+        throttle("api/ip", limit: 600, period: 5.minutes) do |req|
+          req.ip if req.path.start_with?("/api/")
+        end
 
-  say "Rate limiting: 5 logins/min/IP, 100 API/min/IP enabled.", :green
+        self.throttled_responder = lambda do |request|
+          retry_after = request.env["rack.attack.match_data"].to_h[:period].to_i
+          body = { error: "Too many requests. Please retry later.", code: "rate_limited", details: {} }.to_json
+          [ 429, { "content-type" => "application/json", "retry-after" => retry_after.to_s }, [ body ] ]
+        end
+      end
+    RUBY
+  else
+    create_file "config/initializers/rack_attack.rb", <<~RUBY
+      class Rack::Attack
+        # Throttle login attempts (brute force protection)
+        throttle("req/ip login", limit: 5, period: 1.minute) do |req|
+          req.ip if req.path == "/users/sign_in" && req.post?
+        end
+
+        # Throttle API requests
+        throttle("req/ip api", limit: 100, period: 1.minute) do |req|
+          req.ip if req.path.start_with?("/api")
+        end
+
+        # Block obvious bad bots
+        blocklist("bad bots") do |req|
+          req.user_agent.to_s.match?(/ahrefs|semrush|mj12bot/i)
+        end
+      end
+    RUBY
+  end
+
+  say "Rate limiting enabled (config/initializers/rack_attack.rb).", :green
 
 else
   say "Rack::Attack initializer exists.", :yellow
@@ -171,7 +205,7 @@ end
 
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
-main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
+main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb", "api.rb"]
 in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }
 
 if in_main_template
