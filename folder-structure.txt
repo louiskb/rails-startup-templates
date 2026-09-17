@@ -1,26 +1,39 @@
 Folder Structure for Reference:
 
 rails-startup-templates/
+├── CLAUDE.md
 ├── README.md
 ├── LICENSE
 ├── folder-structure.txt
 ├── shell-functions.txt
+├── docs/
+│   └── superpowers/
+│       ├── plans/                  # implementation plans
+│       └── specs/                  # design specs
 ├── rails-8/
-│   ├── bootstrap.rb
-│   ├── custom.rb
-│   └── tailwind.rb
+│   ├── api.rb                      # JSON API (rails new --api)
+│   ├── bootstrap.rb
+│   ├── custom.rb
+│   └── tailwind.rb
 ├── rails-7/
-│   ├── bootstrap.rb
-│   ├── custom.rb
-│   └── tailwind.rb
+│   ├── bootstrap.rb
+│   ├── custom.rb
+│   └── tailwind.rb
 └── shared/
-    ├── active_storage.rb
     ├── admin.rb
+    ├── authentication.rb           # Rails 8 native auth
+    ├── bootstrap.rb                # custom.rb only
+    ├── claude_code.rb              # CLAUDE_CODE module
+    ├── conventional_commits.rb     # applied last by every main template
     ├── dev_tools.rb
     ├── devise.rb
+    ├── devise_jwt.rb               # applied by devise.rb in API apps
     ├── friendly_urls.rb
-    ├── image_processing.rb
+    ├── image_upload_cloudinary.rb
+    ├── layout.rb                   # applied by the Bootstrap/Tailwind templates
     ├── navbar.rb
     ├── pagination.rb
+    ├── ruby_llm.rb
     ├── security.rb
+    ├── tailwind.rb                 # custom.rb only
     └── testing.rb
