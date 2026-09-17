@@ -45,13 +45,6 @@ inject_into_file "Gemfile", after: "group :development, :test do" do
   "\n  gem \"dotenv-rails\""
 end
 
-# Layout viewport (works for all)
-gsub_file(
-  "app/views/layouts/application.html.erb",
-  '<meta name="viewport" content="width=device=device-width, initial-scale=1">',
-  '<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">'
-)
-
 # Vanilla flashes (Tailwind/Bootstrap/vanilla neutral)
 file "app/views/shared/_flashes.html.erb", <<~HTML
   <% if notice %>

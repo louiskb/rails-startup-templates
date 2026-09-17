@@ -63,13 +63,6 @@ inject_into_file "Gemfile", after: "group :development, :test do" do
   "\n  gem \"dotenv-rails\""
 end
 
-# Layout
-gsub_file(
-  "app/views/layouts/application.html.erb",
-  '<meta name="viewport" content="width=device-width, initial-scale=1">',
-  '<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">'
-)
-
 # Flashes (Tailwind)
 # The standard "X" close icon from Heroicons https://heroicons.com/ (Tailwind Labs' official icon set).
 file "app/views/shared/_flashes.html.erb", <<~HTML
