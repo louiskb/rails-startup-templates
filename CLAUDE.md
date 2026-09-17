@@ -77,7 +77,7 @@ Bootstrap templates on Rails 8 explicitly remove Propshaft and add Sprockets bec
 
 ## Module Dependencies
 
-- `admin.rb` (ActiveAdmin 3.5+) requires Devise (any version below 6); the templates only offer it when Devise is in the Gemfile
+- `admin.rb` (ActiveAdmin 3.5+) requires Devise (any version below 6); the templates only offer it when Devise is in the Gemfile. On Rails 7 without Bootstrap, the main templates add `sassc-rails` with it (Sprockets can't serve `active_admin.scss` otherwise, and every page 500s) and, for Tailwind, set `config.assets.css_compressor = nil` (SassC can't minify Tailwind 4's CSS). `admin.rb` adds `*= stub active_admin` to a `require_tree .` application.css so ActiveAdmin's styles stay out of public pages
 - `authentication.rb` is Rails 8 only (native auth); it adds `allow_unauthenticated_access only: :home` to PagesController, as `devise.rb` adds the Devise skip (main templates write PagesController with neither)
 - `devise.rb` applies `devise_jwt.rb` in API apps (JWT endpoints under `/api/v1/users`, `JwtDenylist`, `Api::FailureApp`)
 - `layout.rb` is applied by the Bootstrap/Tailwind main templates and by `shared/bootstrap.rb` / `shared/tailwind.rb` (container shell, footer, Google Fonts `<link>` tags)
