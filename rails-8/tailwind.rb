@@ -338,8 +338,7 @@ after_bundle do
   # Dotenv
   run "touch '.env'"
 
-  # Rubocop
-  run "curl -L https://raw.githubusercontent.com/lewagon/rails-templates/master/.rubocop.yml > .rubocop.yml"
+  # RuboCop: keep the .rubocop.yml Rails 8 generates (rubocop-rails-omakase).
 
   # Initialize Git and make first commit
   git :init
