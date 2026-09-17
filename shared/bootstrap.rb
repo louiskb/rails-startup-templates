@@ -34,17 +34,31 @@ end
 
 # Assets (Le Wagon stylesheets)
 run "rm -rf app/assets/stylesheets"
-run "rm -rf vendor"
+# `vendor/` is NOT removed here (the main bootstrap templates do it in a brand-new app, before
+# anything lives there). By now importmap-rails keeps pinned JavaScript in vendor/javascript.
 run "curl -L https://github.com/lewagon/rails-stylesheets/archive/rails-8.zip > stylesheets.zip"
 run "unzip stylesheets.zip -d app/assets && rm -f stylesheets.zip && rm -f app/assets/rails-stylesheets-rails-8/README.md"
 run "mv app/assets/rails-stylesheets-rails-8 app/assets/stylesheets"
 
-# Sprockets manifest
+# Sprockets manifest. Never overwrite an existing one: custom.rb writes it before bundling
+# and importmap-rails then appends its JavaScript links, which an overwrite would drop
+# (every page then raised AssetNotPrecompiledError).
 run "mkdir -p app/assets/config"
-file "app/assets/config/manifest.js", <<~JS
-  //= link_tree ../images
-  //= link_directory ../stylesheets .css
-JS
+unless File.exist?("app/assets/config/manifest.js")
+  file "app/assets/config/manifest.js", <<~JS
+    //= link_tree ../images
+    //= link_directory ../stylesheets .css
+  JS
+end
+
+# importmap serves app/javascript and vendor/javascript through Sprockets.
+if File.exist?("config/importmap.rb") && !File.read("app/assets/config/manifest.js").include?("../../javascript")
+  run "mkdir -p vendor/javascript"
+  append_file "app/assets/config/manifest.js", <<~JS
+    //= link_tree ../../javascript .js
+    //= link_tree ../../../vendor/javascript .js
+  JS
+end
 
 # Layout
 gsub_file(

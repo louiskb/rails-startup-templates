@@ -121,10 +121,19 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
 
         RUBY
       end
-    end
 
-    # Replace Propshaft with Sprockets if present
-    gsub_file("Gemfile", /^gem "propshaft".*\n/, "")
+      # Replace Propshaft with Sprockets if present
+      gsub_file("Gemfile", /^gem "propshaft".*\n/, "")
+
+      # Sprockets refuses to boot without a manifest, and `after_bundle` runs `rails db:*`
+      # before shared/bootstrap.rb exists to write one (ManifestNeededError aborted every
+      # custom + Bootstrap app). Same content shared/bootstrap.rb writes, so it's identical there.
+      run "mkdir -p app/assets/config"
+      file "app/assets/config/manifest.js", <<~JS
+        //= link_tree ../images
+        //= link_directory ../stylesheets .css
+      JS
+    end
 
   when "t"
     say "Tailwind installing...", :cyan
