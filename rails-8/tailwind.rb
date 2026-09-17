@@ -250,6 +250,10 @@ if should_install?("security", "Install security? (y/n)")
   end
 end
 
+# claude_code: no gem. The answer is kept in a local variable, which the `after_bundle`
+# block below closes over, so no marker file ends up in the initial commit.
+install_claude_code = should_install?("claude_code", "Set up Claude Code (CLAUDE.md, .claude/ settings and rules)? (y/n)")
+
 # STEP 3: AFTER BUNDLE
 
 after_bundle do
@@ -435,6 +439,15 @@ after_bundle do
 
     git add: "."
     git commit: "-m 'feat: install security.'"
+  end
+
+  # shared/claude_code.rb: last module, so it can see everything installed above.
+  if install_claude_code
+    apply source_path("shared/claude_code.rb")
+
+    # Git
+    git add: "."
+    git commit: "-m 'chore: add Claude Code project setup'"
   end
 
   # Run all migrations towards the end of `after_bundle`
