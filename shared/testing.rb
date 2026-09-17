@@ -151,8 +151,11 @@ if File.exist?("config/initializers/devise.rb") || File.exist?("app/models/user.
 
       # Rails 8 lazy-loads routes in test; Devise mappings only register once
       # routes are drawn. Force them before request/system specs run.
-      config.before(:each, type: :request) { Rails.application.reload_routes_unless_loaded }
-      config.before(:each, type: :system)  { Rails.application.reload_routes_unless_loaded }
+      # (Rails 7 draws routes eagerly and has no reload_routes_unless_loaded.)
+      if Rails.application.respond_to?(:reload_routes_unless_loaded)
+        config.before(:each, type: :request) { Rails.application.reload_routes_unless_loaded }
+        config.before(:each, type: :system) { Rails.application.reload_routes_unless_loaded }
+      end
     end
   RUBY
 end
@@ -169,7 +172,7 @@ end
 append_file "spec/rails_helper.rb", <<~RUBY
   # Auto-load support files: RSpec auto-requires `spec/support/**/*.rb` by default.
   # Usually would need to add e.g. `require "shoulder/matchers"` manually.
-  Dir[Rails.root.join("spec", "support", "**", "*.rb")].sort.each { |f| require f }
+  Dir[Rails.root.join("spec", "support", "**", "*.rb")].each { |f| require f } # Dir[] is sorted since Ruby 3.0
 RUBY
 
 # FACTORY LOCATION: keep factories in exactly ONE place (spec/factories).
