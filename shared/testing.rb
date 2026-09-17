@@ -169,7 +169,7 @@ end
 append_file "spec/rails_helper.rb", <<~RUBY
   # Auto-load support files: RSpec auto-requires `spec/support/**/*.rb` by default.
   # Usually would need to add e.g. `require "shoulder/matchers"` manually.
-  Dir[Rails.root.join('spec', 'support', '**', '*.rb')].sort.each { |f| require f }
+  Dir[Rails.root.join("spec", "support", "**", "*.rb")].sort.each { |f| require f }
 RUBY
 
 # FACTORY LOCATION: keep factories in exactly ONE place (spec/factories).
@@ -203,135 +203,104 @@ if Dir.exist?("test/factories")
   Dir.rmdir("test/factories") if Dir.empty?("test/factories")
 end
 
-# Example Factory (User)
-#
-#
-# unless Dir["spec/factories/*.rb"].any?
-  # say "Creating example User factory", :cyan
-  #
-  #
-  # `mkdir -p`: `mkdir` creates a new directory (folder), `-p` creates parent directories as needed and ensures the full path is built recursively e.g., creates `spec` first if missing, then `spec/factories.rb` and returns silently on success.
-  #
-  #
-  # run "mkdir -p spec/factories"
-  #
-  #
-  # `create_file` == (same as) `file` method.
-  # `SecureRandom.hex(4)` generates unique 8-char hexadecimal strings (e.g. `a1b2c3d4@example.com`), ensuring FactoryBot creates distinct emails without needing `sequence` (e.g. `sequence(:email) { |n| "user#{n}@example.com" }`).
-  # `SecureRandom.hex(4)` generates unique random values each time, never the same chars twice.
-  # `SecureRandom.hex` takes a byte length parameter. It generates that many random bytes, then converts each byte to two hex characters (since one byte = 2 hex digits). Key details:
-    # Parameter `4` = 4 bytes of randomness
-    # Output = 8 hex characters (4 bytes x 2 chars/byte)
-    # Each hex char is 0-9 or a-f (16 possible values)
-    # Example email = "user_a1b2c3d4@example.com"
-  #
-  # Rails model attribute block syntax = `password { "password123" }`. In this case, creates unique emails, same password: `user1 = create(:user)  # password123, user_a1b2c3d4@example.com`.
-  # {} = block, which become Procs in this context because FactoryBot auto-converts them to run dynamically.
-  #
-  # Procs capture executable code (like { "password123" }) as a Proc object, turning static assignment into dynamic evaluation each time it's called.
-  # Proc: Code block → reusable object. Runs FRESH each call (vs static assignment). Procs are created by: { code } or Proc.new { code }).
-  # Static assignment: `password = "password123"` (always same value).
-  # Dynamic Proc: `password { "password123" }` (fresh object each time - evaluated fresh per factory) or `email { SecureRandom.hex(4) + "@example.com" }` (runs `SecureRandom` on every user).
-  # FactoryBot: email { SecureRandom.hex(4) + "@example.com" } → unique emails per user!
-  # Call: `.call()` or `[]` — dynamic evaluation every time
-    # FactoryBot proc examples - call with [] or .call():
-      # `email_proc = proc { SecureRandom.hex(4) + "@example.com" }`
-    # Method 1: .call()
-      # `user.email = email_proc.call`  # => "a1b2c3d4@example.com" (fresh!)
-    # Method 2: [] (array syntax)
-      # `user.email = email_proc[""]`   # => "e5f6g7h8@example.com" (fresh!). [""] = empty strings for argument. If Proc uses args this is where it is added e.g. `name_proc = proc { |name| "#{name}@example.com" }` call later with `name_proc["bob"]` # => "bob@example.com"
-    # Why fresh? Proc re-runs SecureRandom each call → always unique emails.
-    # Static would repeat same hex forever.
-    #
-    #
-  # create_file "spec/factories/users.rb", <<~RUBY
-  #   FactoryBot.define do
-  #     factory :user do
-  #       email { "user_#{SecureRandom.hex(4)}@example.com" }
-  #       password { "password123"}
-  #       password_confirmation { "password123" }
-  #       slug {nil} # Ensures `FactoryBot.create(:user)` generates slug post-save.
-  #     end
-  #   end
-  # RUBY
-  #
-  #
-# end
+# EXAMPLE SPECS: only ones that pass on the app as it is right now. (The old version always
+# shipped a Post spec, so every fresh app's suite died with `uninitialized constant Post`.)
+api_only = File.exist?("config/application.rb") && File.read("config/application.rb").include?("config.api_only = true")
+routes = File.exist?("config/routes.rb") ? File.read("config/routes.rb") : ""
+schema = File.exist?("db/schema.rb") ? File.read("db/schema.rb") : ""
+run "mkdir -p spec/factories spec/requests"
 
-# Create example model Spec for User
-# unless File.exist?("spec/models/user_spec.rb")
-#   say "Creating example User model spec", :cyan
-#   run "mkdir -p spec/models"
-#   create_file "spec/models/user_spec.rb", <<~RUBY
-#     require "rails_helper"
-
-#     RSpec.describe User, type: :model do
-#       it "has a valid factory" do
-#         user = FactoryBot.build(:user)
-#         expect(user.valid?).to eq(true)
-#       end
-
-#       it { should validate_presence_of(:email) }
-#       it { should validate_uniqueness_of(:email).case_insensitive }
-#     end
-#   RUBY
-# end
-
-# Example Factory (Post)
-unless Dir["spec/factories/*.rb"].any?
-  say "Creating example Post factory", :cyan
-
-  run "mkdir -p spec/factories"
-
-  create_file "spec/factories/posts.rb", <<~RUBY
+# User factory, for whichever authentication created the User model.
+# `<<~'RUBY'` (quoted) keeps `#{n}` literal in the generated factory.
+user_model = File.exist?("app/models/user.rb") ? File.read("app/models/user.rb") : ""
+if File.exist?("spec/factories/users.rb")
+  say "spec/factories/users.rb exists, leaving it unchanged.", :yellow
+elsif user_model.include?("devise")
+  create_file "spec/factories/users.rb", <<~'RUBY'
     FactoryBot.define do
-      factory :post do
-        title { "My First #{SecureRandom.hex(2).capitalize} Post"}
-        content { "This is a sample post. Animi vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum " }
-        slug { nil }
-        # Common fields for blog/demo apps - works even without Post model.
+      factory :user do
+        sequence(:email) { |n| "user#{n}@example.com" }
+        password { "password123" }
+      end
+    end
+  RUBY
+elsif user_model.include?("has_secure_password")
+  create_file "spec/factories/users.rb", <<~'RUBY'
+    FactoryBot.define do
+      factory :user do
+        sequence(:email_address) { |n| "user#{n}@example.com" }
+        password { "password123" }
       end
     end
   RUBY
 end
 
-# Create example model Spec for Post
-unless File.exist?("spec/models/post_spec.rb")
-  say "Creating example Post model spec", :cyan
-  run "mkdir -p spec/models"
-  create_file "spec/models/post_spec.rb", <<~RUBY
+# Post example: only when the app HAS a Post model with a title column.
+posts_table = schema[/create_table "posts".*?^  end/m].to_s
+if File.exist?("app/models/post.rb") && posts_table.match?(/t\.\w+ "title"/)
+  post_attributes = [ %(title { "Post \#{SecureRandom.hex(3)}" }) ]
+  post_attributes << %(content { "Sample post content." }) if posts_table.match?(/t\.\w+ "content"/)
+  post_attributes << "slug { nil } # FriendlyId generates it on save" if posts_table.match?(/t\.\w+ "slug"/)
+
+  unless File.exist?("spec/factories/posts.rb")
+    create_file "spec/factories/posts.rb", <<~RUBY
+      FactoryBot.define do
+        factory :post do
+      #{post_attributes.map { |line| "    #{line}" }.join("\n")}
+        end
+      end
+    RUBY
+  end
+
+  unless File.exist?("spec/models/post_spec.rb")
+    run "mkdir -p spec/models"
+    create_file "spec/models/post_spec.rb", <<~RUBY
+      require "rails_helper"
+
+      RSpec.describe Post, type: :model do
+        it "has a valid factory" do
+          expect(build(:post)).to be_valid
+        end
+
+        # One-line matchers (Shoulda Matchers). Uncomment the ones your model enforces:
+        # it { should validate_presence_of(:title) }
+        # it { should validate_uniqueness_of(:title).case_insensitive }
+      end
+    RUBY
+  end
+end
+
+# Health check: every Rails 7.1+ app (API or not) serves GET /up.
+if routes.include?("rails_health_check") && !File.exist?("spec/requests/health_spec.rb")
+  create_file "spec/requests/health_spec.rb", <<~RUBY
     require "rails_helper"
 
-    RSpec.describe Post, type: :model do
-      it "has a valid factory" do
-        post = FactoryBot.build(:post)
-        expect(post.valid?).to eq(true)
-      end
+    RSpec.describe "Health check", type: :request do
+      it "reports that the app boots" do
+        get rails_health_check_path
 
-      it { should validate_presence_of(:title) }
-      it { should validate_uniqueness_of(:title).case_insensitive }
+        expect(response).to have_http_status(:ok)
+      end
     end
   RUBY
 end
 
-
-unless Dir["spec/system/pages_spec.rb"].any?
-  say "Creating example PagesController system spec", :cyan
+# Home page renders for a visitor (would have caught the PagesController crash).
+if !api_only && routes.match?(/^\s*root /) && !File.exist?("spec/system/pages_spec.rb")
   run "mkdir -p spec/system"
-  file "spec/system/pages_spec.rb", <<~RUBY
+  create_file "spec/system/pages_spec.rb", <<~RUBY
     require "rails_helper"
 
-    RSpec.describe "Pages", type: :system do
+    RSpec.describe "Home page", type: :system do
       before do
         driven_by(:rack_test)
       end
 
-      describe "home page" do
-        it "loads successfully" do
-          visit root_path
-          expect(page).to have_content("Welcome") # Matches your Pages#home
-          expect(page.status_code).to eq 200
-        end
+      it "renders for a visitor who isn't signed in" do
+        visit root_path
+
+        expect(page.status_code).to eq(200)
+        expect(page).to have_css("body")
       end
     end
   RUBY
