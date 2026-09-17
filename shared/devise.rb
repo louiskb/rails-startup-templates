@@ -42,6 +42,15 @@ unless gemfile.match?(/^\s*gem ["']devise["']/)
   run "bundle install" unless system("bundle check")
 end
 
+# API-only apps authenticate with JWTs (shared/devise_jwt.rb): add devise-jwt when missing.
+api_only = File.exist?("config/application.rb") && File.read("config/application.rb").include?("config.api_only = true")
+if api_only && !File.read("Gemfile").match?(/^\s*gem ["']devise-jwt["']/)
+  inject_into_file "Gemfile", after: /^\s*gem ["']devise["'].*\n/ do
+    "gem \"devise-jwt\"\n"
+  end
+  run "bundle install" unless system("bundle check")
+end
+
 # Devise:install generator
 # GUARD 2: Skip if config already exists (idempotent - Doing it multiple times = same result as once (safe to re-run).
 if File.exist?("config/initializers/devise.rb")
@@ -58,44 +67,49 @@ else
   generate("devise", "User")
 end
 
-# ApplicationController: require sign-in everywhere (pages opt out below).
-app_controller = "app/controllers/application_controller.rb"
-unless File.read(app_controller).match?(/^\s*before_action :authenticate_user!/)
-  inject_into_file app_controller, after: "class ApplicationController < ActionController::Base\n" do
-    <<~RUBY
-      before_action :authenticate_user!
-    RUBY
+if api_only
+  # API apps: JWT authentication instead of views, sessions and redirects.
+  apply File.join(File.dirname(__FILE__), "devise_jwt.rb")
+else
+  # ApplicationController: require sign-in everywhere (pages opt out below).
+  app_controller = "app/controllers/application_controller.rb"
+  unless File.read(app_controller).match?(/^\s*before_action :authenticate_user!/)
+    inject_into_file app_controller, after: "class ApplicationController < ActionController::Base\n" do
+      <<~RUBY
+        before_action :authenticate_user!
+      RUBY
+    end
   end
-end
 
-# PagesController#home stays public. The main templates write PagesController without
-# this line because `skip_before_action :authenticate_user!` raises ArgumentError in any
-# app where Devise hasn't defined that callback.
-pages_controller = "app/controllers/pages_controller.rb"
-if File.exist?(pages_controller) && !File.read(pages_controller).match?(/^\s*skip_before_action :authenticate_user!/)
-  inject_into_file pages_controller, after: "class PagesController < ApplicationController\n" do
-    "  skip_before_action :authenticate_user!, only: :home\n\n"
+  # PagesController#home stays public. The main templates write PagesController without
+  # this line because `skip_before_action :authenticate_user!` raises ArgumentError in any
+  # app where Devise hasn't defined that callback.
+  pages_controller = "app/controllers/pages_controller.rb"
+  if File.exist?(pages_controller) && !File.read(pages_controller).match?(/^\s*skip_before_action :authenticate_user!/)
+    inject_into_file pages_controller, after: "class PagesController < ApplicationController\n" do
+      "  skip_before_action :authenticate_user!, only: :home\n\n"
+    end
   end
-end
 
-# Devise views
-generate("devise:views")
+  # Devise views
+  generate("devise:views")
 
-# Style cancel account link → Bootstrap button (only works if Bootstrap is installed)
-if File.exist?("app/views/devise/registrations/edit.html.erb") && File.read("Gemfile").include?("gem \"bootstrap\"")
-  link_to = <<~HTML
-    <p>Unhappy? <%= link_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete %></p>
-  HTML
+  # Style cancel account link → Bootstrap button (only works if Bootstrap is installed)
+  if File.exist?("app/views/devise/registrations/edit.html.erb") && File.read("Gemfile").include?("gem \"bootstrap\"")
+    link_to = <<~HTML
+      <p>Unhappy? <%= link_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete %></p>
+    HTML
 
-  button_to = <<~HTML
-    <div class="d-flex align-items-center">
-      <div>Unhappy?</div>
-      <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete, class: "btn btn-link" %>
-    </div>
-  HTML
+    button_to = <<~HTML
+      <div class="d-flex align-items-center">
+        <div>Unhappy?</div>
+        <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete, class: "btn btn-link" %>
+      </div>
+    HTML
 
-  gsub_file("app/views/devise/registrations/edit.html.erb", link_to, button_to)
-  say "Updated Devise cancel button to Bootstrap style.", :green
+    gsub_file("app/views/devise/registrations/edit.html.erb", link_to, button_to)
+    say "Updated Devise cancel button to Bootstrap style.", :green
+  end
 end
 
 # STANDALONE MIGRATION SUPPORT

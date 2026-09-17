@@ -309,6 +309,85 @@ if !api_only && routes.match?(/^\s*root /) && !File.exist?("spec/system/pages_sp
   RUBY
 end
 
+# API apps with devise-jwt: sign-in helper + the auth flow end to end.
+if File.exist?("app/models/jwt_denylist.rb")
+  unless File.exist?("spec/support/api_auth.rb")
+    create_file "spec/support/api_auth.rb", <<~RUBY
+      # Signs in through the real endpoint and returns the headers a client would send:
+      #   get "/api/v1/me", headers: auth_headers_for(user)
+      module ApiAuthHelpers
+        def auth_headers_for(user, password: "password123")
+          post "/api/v1/users/sign_in", params: { user: { email: user.email, password: password } }, as: :json
+          { "Authorization" => response.headers["Authorization"] }
+        end
+      end
+
+      RSpec.configure do |config|
+        config.include ApiAuthHelpers, type: :request
+      end
+    RUBY
+  end
+
+  unless File.exist?("spec/requests/api/v1/users_spec.rb")
+    run "mkdir -p spec/requests/api/v1"
+    create_file "spec/requests/api/v1/users_spec.rb", <<~RUBY
+      require "rails_helper"
+
+      RSpec.describe "API v1 authentication", type: :request do
+        let(:user) { create(:user) }
+
+        it "signs up and returns a token" do
+          post "/api/v1/users",
+               params: { user: { email: "new@example.com", password: "password123", password_confirmation: "password123" } },
+               as: :json
+
+          expect(response).to have_http_status(:created)
+          expect(response.headers["Authorization"]).to start_with("Bearer ")
+          expect(response.parsed_body.dig("user", "email")).to eq("new@example.com")
+        end
+
+        it "rejects an invalid sign-up in the API error shape" do
+          post "/api/v1/users", params: { user: { email: "not-an-email", password: "short" } }, as: :json
+
+          expect(response).to have_http_status(:unprocessable_content)
+          expect(response.parsed_body).to include("code" => "invalid_input")
+        end
+
+        it "signs in and returns a token" do
+          post "/api/v1/users/sign_in", params: { user: { email: user.email, password: "password123" } }, as: :json
+
+          expect(response).to have_http_status(:ok)
+          expect(response.headers["Authorization"]).to start_with("Bearer ")
+        end
+
+        it "returns the signed-in user for a valid token" do
+          get "/api/v1/me", headers: auth_headers_for(user)
+
+          expect(response).to have_http_status(:ok)
+          expect(response.parsed_body.dig("user", "id")).to eq(user.id)
+        end
+
+        it "answers 401 in the API error shape without a token" do
+          get "/api/v1/me"
+
+          expect(response).to have_http_status(:unauthorized)
+          expect(response.parsed_body).to include("code" => "unauthorized")
+        end
+
+        it "revokes the token on sign-out" do
+          headers = auth_headers_for(user)
+
+          delete "/api/v1/users/sign_out", headers: headers
+          expect(response).to have_http_status(:no_content)
+
+          get "/api/v1/me", headers: headers
+          expect(response).to have_http_status(:unauthorized)
+        end
+      end
+    RUBY
+  end
+end
+
 # DOCUMENTATION:
 # RSpec docs = https://github.com/rspec/rspec-rails
 # FactoryBot docs = https://github.com/thoughtbot/factory_bot
