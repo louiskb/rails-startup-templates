@@ -32,6 +32,19 @@ def source_path(file)
   end
 end
 
+# Apply a shared module. Modules stop with `exit` when their guard finds them already installed,
+# which is right standalone (`rails app:template`), but inside `rails new` that `exit` would end
+# the whole generation: every later module, the migrations and the final commits skipped, with
+# the shell reporting success. A clean exit (status 0) now skips only that module; a failing one
+# (`exit 1`, `abort`) still stops the run.
+def apply_shared(file)
+  apply source_path(file)
+rescue SystemExit => e
+  raise unless e.success?
+
+  say "#{file} stopped early (already installed); continuing with the next step.", :yellow
+end
+
 # Ruby version pin — uses the current local Ruby version; silences Heroku's "no Ruby version declared" warning.
 inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
@@ -91,7 +104,7 @@ inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
 end
 
 # Layout shell: <main> container, footer, Google Fonts <link> tags (shared/layout.rb)
-apply source_path("shared/layout.rb")
+apply_shared("shared/layout.rb")
 
 # README
 markdown_readme_content = <<~MARKDOWN
@@ -368,7 +381,7 @@ after_bundle do
 
   # shared/devise.rb
   if gemfile.include?("gem \"devise\"")
-    apply source_path("shared/devise.rb")
+    apply_shared("shared/devise.rb")
 
     git add: "."
     git commit: "-m 'feat: install devise.'"
@@ -376,7 +389,7 @@ after_bundle do
 
   # shared/authentication.rb
   if File.exist?("authentication.txt")
-    apply source_path("shared/authentication.rb")
+    apply_shared("shared/authentication.rb")
     run "rm -f authentication.txt"
 
     git add: "."
@@ -385,7 +398,7 @@ after_bundle do
 
   # shared/admin.rb (Devise required before installation)
   if gemfile.include?('gem "activeadmin"')
-    apply source_path("shared/admin.rb")
+    apply_shared("shared/admin.rb")
 
     git add: "."
     git commit: "-m 'feat: install active admin.'"
@@ -393,7 +406,7 @@ after_bundle do
 
   # shared/dev_tools.rb
   if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotaterb"')
-    apply source_path("shared/dev_tools.rb")
+    apply_shared("shared/dev_tools.rb")
 
     git add: "."
     git commit: "-m 'feat: install dev_tools template gems (annotaterb, better errors, pry, awesome print, rubocop).'"
@@ -401,7 +414,7 @@ after_bundle do
 
   # shared/friendly_urls.rb
   if gemfile.include?('gem "friendly_id"')
-    apply source_path("shared/friendly_urls.rb")
+    apply_shared("shared/friendly_urls.rb")
 
     git add: "."
     git commit: "-m 'feat: install friendly id.'"
@@ -409,7 +422,7 @@ after_bundle do
 
   # shared/testing.rb
   if gemfile.include?('gem "rspec-rails"')
-    apply source_path("shared/testing.rb")
+    apply_shared("shared/testing.rb")
 
     git add: "."
     git commit: "-m 'feat: install testing.'"
@@ -417,7 +430,7 @@ after_bundle do
 
   # shared/image_upload_cloudinary.rb
   if gemfile.include?('gem "cloudinary"')
-    apply source_path("shared/image_upload_cloudinary.rb")
+    apply_shared("shared/image_upload_cloudinary.rb")
 
     git add: "."
     git commit: "-m 'feat: install active storage and cloudinary.'"
@@ -425,7 +438,7 @@ after_bundle do
 
   # shared/pagination.rb
   if gemfile.include?('gem "pagy"')
-    apply source_path("shared/pagination.rb")
+    apply_shared("shared/pagination.rb")
 
     git add: "."
     git commit: "-m 'feat: install pagy pagination.'"
@@ -433,7 +446,7 @@ after_bundle do
 
   # shared/ruby_llm.rb
   if gemfile.include?("gem \"ruby_llm\"")
-    apply source_path("shared/ruby_llm.rb")
+    apply_shared("shared/ruby_llm.rb")
 
     git add: "."
     git commit: "-m 'feat: install ruby_llm.'"
@@ -441,7 +454,7 @@ after_bundle do
 
   # shared/security.rb
   if gemfile.include?('gem "secure_headers"')
-    apply source_path("shared/security.rb")
+    apply_shared("shared/security.rb")
 
     git add: "."
     git commit: "-m 'feat: install security.'"
@@ -449,7 +462,7 @@ after_bundle do
 
   # shared/claude_code.rb: last module, so it can see everything installed above.
   if install_claude_code
-    apply source_path("shared/claude_code.rb")
+    apply_shared("shared/claude_code.rb")
 
     # Git
     git add: "."
@@ -475,7 +488,7 @@ after_bundle do
 
   # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
   # Last on purpose: every commit above is made before the hook exists.
-  apply source_path("shared/conventional_commits.rb")
+  apply_shared("shared/conventional_commits.rb")
   git add: "."
   git commit: "-m 'chore: enforce conventional commits with a commit-msg hook'"
 
