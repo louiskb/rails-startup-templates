@@ -485,6 +485,14 @@ after_bundle do
   git add: "."
   run "git diff --cached --quiet || git commit -m 'chore(db): run migrations after module setup'"
 
+  # RuboCop: autocorrect generator output so the app passes its own lint. Rails 7.1 has no
+  # bin/rubocop, and RuboCop is only in the bundle with the Dev Tools module.
+  if File.read("Gemfile.lock").match?(/^    rubocop \(/)
+    run "bundle exec rubocop -a > /dev/null || true"
+    git add: "."
+    run "git diff --cached --quiet || git commit -m 'style: autocorrect RuboCop offenses in generated code'"
+  end
+
   # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
   # Last on purpose: every commit above is made before the hook exists.
   apply source_path("shared/conventional_commits.rb")

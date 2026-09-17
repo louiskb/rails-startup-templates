@@ -238,7 +238,7 @@ after_bundle do
     # Use this setup block to configure all options available in SimpleForm.
     SimpleForm.setup do |config|
       # Tailwind CSS configuration
-      config.wrappers :tailwind, class: 'mb-4' do |b|
+      config.wrappers :tailwind, class: "mb-4" do |b|
         b.use :html5
         b.use :placeholder
         b.optional :maxlength
@@ -246,10 +246,10 @@ after_bundle do
         b.optional :pattern
         b.optional :min_max
         b.optional :readonly
-        b.use :label, class: 'block text-sm font-medium text-gray-700 mb-1'
-        b.use :input, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50', error_class: 'border-red-500'
-        b.use :error, wrap_with: { tag: 'p', class: 'mt-2 text-sm text-red-600' }
-        b.use :hint, wrap_with: { tag: 'p', class: 'mt-2 text-sm text-gray-500' }
+        b.use :label, class: "block text-sm font-medium text-gray-700 mb-1"
+        b.use :input, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50", error_class: "border-red-500"
+        b.use :error, wrap_with: { tag: "p", class: "mt-2 text-sm text-red-600" }
+        b.use :hint, wrap_with: { tag: "p", class: "mt-2 text-sm text-gray-500" }
       end
 
       config.default_wrapper = :tailwind
@@ -406,6 +406,14 @@ after_bundle do
   # `git commit` exits 1 and aborts the template before the final message.
   git add: "."
   run "git diff --cached --quiet || git commit -m 'chore(db): run migrations after module setup'"
+
+  # RuboCop: autocorrect generator output so the app passes its own lint. Rails 7.1 has no
+  # bin/rubocop, and RuboCop is only in the bundle with the Dev Tools module.
+  if File.read("Gemfile.lock").match?(/^    rubocop \(/)
+    run "bundle exec rubocop -a > /dev/null || true"
+    git add: "."
+    run "git diff --cached --quiet || git commit -m 'style: autocorrect RuboCop offenses in generated code'"
+  end
 
   # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
   # Last on purpose: every commit above is made before the hook exists.

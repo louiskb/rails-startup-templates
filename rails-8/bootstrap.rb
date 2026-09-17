@@ -529,6 +529,15 @@ after_bundle do
   git add: "."
   run "git diff --cached --quiet || git commit -m 'chore(db): run migrations after module setup'"
 
+  # RuboCop: autocorrect generator output the template doesn't write (simple_form and
+  # Devise initializers, …) so a new app passes its own `bin/rubocop` and CI lint job.
+  # Safe corrections only (`-a`): every offense in a fresh app is marked safe.
+  if File.exist?("bin/rubocop")
+    run "bin/rubocop -a > /dev/null || true"
+    git add: "."
+    run "git diff --cached --quiet || git commit -m 'style: autocorrect RuboCop offenses in generated code'"
+  end
+
   # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
   # Last on purpose: every commit above is made before the hook exists.
   apply source_path("shared/conventional_commits.rb")
