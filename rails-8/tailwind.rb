@@ -37,6 +37,19 @@ inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
 end
 
+# json < 3: json 3.0 (2026-09-07) made JSON.parse options keyword-only, and Rails 8.1.3.1
+# still passes them positionally. Decoding the session cookie raises ArgumentError, so
+# every sign-up/sign-in POST in a fresh app 500s. Fixed upstream in rails/rails#58601
+# (merged, unreleased as of 2026-09-17): remove this pin once the Rails version in
+# shell-functions.txt includes it.
+inject_into_file "Gemfile", before: "group :development, :test do" do
+  <<~RUBY
+    # Remove once Rails includes rails/rails#58601 (json 3.0 compatibility)
+    gem "json", "< 3"
+
+  RUBY
+end
+
 # Gemfile
 inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
