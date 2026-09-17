@@ -329,10 +329,19 @@ after_bundle do
   # Routes
   route 'root to: "pages#home"'
 
-  # Gitignore + common setup
+  # Gitignore
   append_file ".gitignore", <<~TXT
-    # Ignore .env file containing credentials.
+
+    # Secrets: never commit these. Before a first push, also check .mcp.json: MCP configs
+    # can embed API keys. Reference them as ${VAR} instead.
+    # (Rails already ignores config/master.key and config/credentials/*.key.)
     .env*
+    !.env.example
+
+    # Claude Code: personal machine-local settings (.claude/settings.json IS shared and committed)
+    .claude/settings.local.json
+
+    # Editor and OS files
     *.swp
     .DS_Store
   TXT
@@ -369,7 +378,7 @@ after_bundle do
   # Initialize Git and make first commit.
   git :init
   git add: "."
-  git commit: "-m 'initial commit: new rails app setup with Custom template.'"
+  git commit: "-m 'chore: initial commit from the Custom template'"
 
   # APPLY shared templates ONLY if their gems were added during interactive setup.
   # TODO: Add more conditional gem checks for each new shared template:
@@ -499,9 +508,16 @@ after_bundle do
   # Run all migrations towards the end of `after_bundle`.
   rails_command "db:migrate db:seed"
 
-  # Git
+  # Git. Guarded: with no modules there may be nothing new to commit, and an empty
+  # `git commit` exits 1 and aborts the template before the final message.
   git add: "."
-  git commit: "-m 'feat: add migration after initial setup.'"
+  run "git diff --cached --quiet || git commit -m 'chore(db): run migrations after module setup'"
+
+  # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
+  # Last on purpose: every commit above is made before the hook exists.
+  apply source_path("shared/conventional_commits.rb")
+  git add: "."
+  git commit: "-m 'chore: enforce conventional commits with a commit-msg hook'"
 
   say "✅ Rails 8 Custom template installation complete! 🚀🔥", :green
 end
