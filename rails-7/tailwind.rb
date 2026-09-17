@@ -413,8 +413,10 @@ after_bundle do
   # Run all migrations towards the end of `after_bundle`
   rails_command "db:migrate db:seed"
 
+  # Guarded: with no modules there may be nothing new to commit, and an empty
+  # `git commit` exits 1 and aborts the template before the final message.
   git add: "."
-  git commit: "-m 'feat: add migration after initial setup.'"
+  run "git diff --cached --quiet || git commit -m 'feat: add migration after initial setup.'"
 
   say "✅ Rails 7 Tailwind template installation complete! 🚀🔥", :green
 end
