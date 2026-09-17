@@ -22,9 +22,30 @@
 # 1. Fresh app: applied by shared/devise.rb inside a main template's `after_bundle`.
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/devise_jwt.rb`).
 
+base_controller = "app/controllers/api/v1/base_controller.rb"
+prerequisites = {
+  "an API-only app (config.api_only = true)" => File.exist?("config/application.rb") && File.read("config/application.rb").include?("config.api_only = true"),
+  "Devise installed (config/initializers/devise.rb + app/models/user.rb)" => File.exist?("config/initializers/devise.rb") && File.exist?("app/models/user.rb"),
+  "Api::V1::BaseController (app/controllers/api/v1/base_controller.rb)" => File.exist?(base_controller),
+  "the blueprinter gem" => File.exist?("Gemfile") && File.read("Gemfile").match?(/^\s*gem ["']blueprinter["']/)
+}
+missing = prerequisites.reject { |_, present| present }.keys
+
 if File.exist?("app/models/jwt_denylist.rb")
   say "JwtDenylist exists: devise-jwt is already set up, skipping.", :yellow
+elsif missing.any?
+  # Written for apps generated from rails-8/api.rb (or shared/devise.rb inside one). Anywhere
+  # else the controllers below would reference classes and gems that don't exist.
+  say "devise_jwt.rb needs an app generated from rails-8/api.rb. Missing: #{missing.join("; ")}. Nothing changed.", :red
 else
+  # devise-jwt gem (shared/devise.rb adds it; this covers running devise_jwt.rb directly)
+  unless File.read("Gemfile").match?(/^\s*gem ["']devise-jwt["']/)
+    inject_into_file "Gemfile", after: /^\s*gem ["']devise["'].*\n/ do
+      "gem \"devise-jwt\"\n"
+    end
+    run "bundle install" unless system("bundle check > /dev/null 2>&1")
+  end
+
   # 2. Devise helpers + respond_to for API controllers
   inject_into_file "app/controllers/application_controller.rb", after: "class ApplicationController < ActionController::API\n" do
     <<~RUBY.indent(2)
@@ -49,6 +70,11 @@ else
 
   gsub_file "app/models/user.rb", ":recoverable, :rememberable, :validatable",
     ":recoverable, :rememberable, :validatable,\n         :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist"
+  # gsub_file doesn't fail when nothing matches (e.g. a customised devise line): without this,
+  # sign-in would answer 200 with no token and every authenticated request 401.
+  unless File.read("app/models/user.rb").include?(":jwt_authenticatable")
+    say "⚠️  Couldn't add :jwt_authenticatable to app/models/user.rb: add `:jwt_authenticatable, jwt_revocation_strategy: JwtDenylist` to its `devise` line.", :red
+  end
 
   create_file "app/lib/api/failure_app.rb", <<~RUBY
     module Api
@@ -76,6 +102,12 @@ else
         module Users
           # POST /api/v1/users: devise-jwt adds the Authorization header on success.
           class RegistrationsController < Devise::RegistrationsController
+            # Devise controllers don't inherit Api::V1::BaseController: keep its error shape here
+            # (a body without `user` would otherwise get Rails' generic 400).
+            rescue_from ActionController::ParameterMissing do |exception|
+              render json: { error: exception.message, code: "parameter_missing", details: {} }, status: :bad_request
+            end
+
             def create
               build_resource(sign_up_params)
 
@@ -143,7 +175,6 @@ else
     end
   RUBY
 
-  base_controller = "app/controllers/api/v1/base_controller.rb"
   if File.exist?(base_controller) && !File.read(base_controller).match?(/^\s*before_action :authenticate_user!/)
     inject_into_file base_controller, after: "    class BaseController < ApplicationController\n" do
       "      before_action :authenticate_user!\n\n"
@@ -152,6 +183,9 @@ else
 
   # 1. Routes: mapping at the root, endpoints inside /api/v1.
   gsub_file "config/routes.rb", /^(\s*)devise_for :users\n/, "\\1devise_for :users, skip: :all\n"
+  unless File.read("config/routes.rb").include?("devise_for :users, skip: :all")
+    say "⚠️  Couldn't change `devise_for :users` to `devise_for :users, skip: :all` in config/routes.rb: do it by hand, at the root of the routes block.", :red
+  end
   api_routes = <<~RUBY
     devise_scope :user do
       post "users", to: "users/registrations#create"
@@ -164,7 +198,7 @@ else
     inject_into_file "config/routes.rb", api_routes.indent(6), after: /^\s*namespace :v1 do\n/
   else
     inject_into_file "config/routes.rb", before: /^end\s*\z/ do
-      "  namespace :api, defaults: { format: :json } do\n    namespace :v1 do\n#{api_routes.indent(6)}    end\n  end\n"
+      "  namespace :api, defaults: { format: :json }, constraints: { format: \"json\" } do\n    namespace :v1 do\n#{api_routes.indent(6)}    end\n  end\n"
     end
   end
 
@@ -202,6 +236,10 @@ else
     RUBY
   end
 
+  # STANDALONE MIGRATION SUPPORT (inside a main template, migrations run at the end)
+  main_templates = [ "bootstrap.rb", "custom.rb", "tailwind.rb", "api.rb" ]
+  in_main_template = caller_locations.any? { |loc| loc.label == "after_bundle" || loc.path =~ Regexp.union(main_templates) }
+  rails_command "db:migrate" unless in_main_template
 
   say "✅ devise-jwt API authentication installed!", :green
 end

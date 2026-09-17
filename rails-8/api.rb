@@ -232,9 +232,12 @@ after_bundle do
     end
   RUBY
 
-  # Routes: JSON by default, versioned.
+  # Routes: JSON only, versioned. The format constraint makes `.xml` (or any non-JSON suffix)
+  # a 404: Rack::Attack throttles and devise-jwt's token paths only account for `.json`, so
+  # `POST /api/v1/users/sign_in.xml` would otherwise dodge the login throttle and
+  # `DELETE /api/v1/users/sign_out.xml` would answer 204 without revoking the token.
   route <<~RUBY
-    namespace :api, defaults: { format: :json } do
+    namespace :api, defaults: { format: :json }, constraints: { format: "json" } do
       namespace :v1 do
         # /api/v1 endpoints (controllers inherit Api::V1::BaseController)
       end
@@ -247,8 +250,10 @@ after_bundle do
     # Set ALLOWED_ORIGINS (comma-separated) per environment, e.g.
     #   ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
     # Native mobile apps send no Origin header, so CORS doesn't restrict them.
-    allowed_origins = ENV.fetch("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,http://localhost:8081")
-      .split(",").map { |origin| origin.strip.delete_suffix("/") }
+    # Production gets no default: an unset ALLOWED_ORIGINS allows no browser origins.
+    default_origins = Rails.env.production? ? "" : "http://localhost:3000,http://localhost:5173,http://localhost:8081"
+    allowed_origins = ENV.fetch("ALLOWED_ORIGINS", default_origins)
+      .split(",").map { |origin| origin.strip.delete_suffix("/") }.reject(&:empty?)
 
     Rails.application.config.middleware.insert_before 0, Rack::Cors do
       allow do

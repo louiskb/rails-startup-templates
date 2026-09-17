@@ -147,8 +147,8 @@ unless File.exist?("config/initializers/rack_attack.rb")
   if api_only
     create_file "config/initializers/rack_attack.rb", <<~RUBY
       # Rate limiting. Throttled requests get a 429 in the API error shape.
-      # Rack::Attack counts in Rails.cache: development's :null_store never throttles
-      # unless `bin/rails dev:cache` is on.
+      # Rack::Attack counts in Rails.cache: Rails 8 development uses an in-memory store
+      # (throttles apply per server process and reset on restart); test uses :null_store.
       class Rack::Attack
         # Brute-force protection on sign-in
         throttle("logins/ip", limit: 10, period: 1.minute) do |req|
