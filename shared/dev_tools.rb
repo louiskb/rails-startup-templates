@@ -23,7 +23,7 @@ missing_gems = []
 unless gemfile.match?(/^gem.*['"]better_errors['"]/)
   say 'Adding gem "better_errors" to Gemfile (development group)...', :blue
 
-  inject_into_file "Gemfile", after: "group :development do \n" do
+  inject_into_file "Gemfile", after: "group :development do\n" do
     <<~RUBY
       gem "better_errors"
       gem "binding_of_caller"
