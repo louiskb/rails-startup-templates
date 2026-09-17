@@ -19,8 +19,10 @@ end
 # Fresh apps: main template already added gem → this skips.
 gemfile = File.read("Gemfile")
 missing_gems = []
+# API-only apps skip Better Errors: it renders HTML error pages, which an API never serves.
+api_only = File.exist?("config/application.rb") && File.read("config/application.rb").include?("config.api_only = true")
 
-unless gemfile.match?(/^gem.*['"]better_errors['"]/)
+unless api_only || gemfile.match?(/^gem.*['"]better_errors['"]/)
   say 'Adding gem "better_errors" to Gemfile (development group)...', :blue
 
   inject_into_file "Gemfile", after: "group :development do\n" do
@@ -132,7 +134,7 @@ end
 
 # 3. Better Errors Setup
 # For Better Errors, usually only need the gem but can ensure it's restricted to development environment in `config/environments/development.rb` if desired.
-if File.exist?("config/environments/development.rb") && !File.read("config/environments/development.rb").include?("BetterErrors")
+if !api_only && File.exist?("config/environments/development.rb") && !File.read("config/environments/development.rb").include?("BetterErrors")
   # Non-invasive comment to remind you it's installed.
   inject_into_file "config/environments/development.rb",
   after: "Rails.application.configure do\n" do
@@ -204,7 +206,7 @@ end
 
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
-main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
+main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb", "api.rb"]
 in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }
 
 if in_main_template

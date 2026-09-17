@@ -108,7 +108,7 @@ end
 # `any?` short-circuits on the first truthy block result.
 # `Regexp.union` builds one Regexp from multiple patterns by joining them with `|` (regex alternation), so it matches any of the inputs. `|` acts as logical OR—tries left-to-right, takes first match. `Regexp.union` inputs could be strings, Regexps, or an array.
 # `Regexp.union(['bootstrap.rb', 'custom.rb', 'tailwind.rb'])` → /bootstrap\.rb|custom\.rb|tailwind\.rb/
-main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
+main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb", "api.rb"]
 in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }
 
 if in_main_template

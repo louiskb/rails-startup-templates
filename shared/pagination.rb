@@ -7,6 +7,8 @@
 # 2. Existing app: Standalone - applying the shared template with an existing app (e.g. `rails app:template LOCATION=shared/pagination.rb`).
 
 gemfile = File.read("Gemfile")
+# API-only apps: no stylesheet; pagination travels in response headers.
+api_only = File.exist?("config/application.rb") && File.read("config/application.rb").include?("config.api_only = true")
 
 # GUARD 1: Skip entire template if Pagination is already installed.
 if gemfile.match?(/^gem.*['"]pagy['"]/) && File.exist?("config/initializers/pagy.rb")
@@ -38,7 +40,9 @@ unless File.exist?("config/initializers/pagy.rb")
 end
 
 # Integrate the Stylesheets (CSS or Tailwind) into Rails app for native Pagy helpers. No additional CSS file is needed for Bootstrap.
-if !gemfile.match?(/^gem.*['"]tailwindcss-rails['"]/) && !gemfile.match?(/^gem.*['"]bootstrap['"]/)
+if api_only
+  say "API-only app: no pagination stylesheet (JSON responses carry pagination headers).", :yellow
+elsif !gemfile.match?(/^gem.*['"]tailwindcss-rails['"]/) && !gemfile.match?(/^gem.*['"]bootstrap['"]/)
   run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy.css > app/assets/stylesheets/pagy.css"
 
   inject_into_file "app/assets/stylesheets/pagy.css", before: ".pagy {" do
@@ -60,37 +64,35 @@ elsif gemfile.match?(/^gem.*['"]tailwindcss-rails['"]/)
   say "Added `pagy-tailwind.css` stylesheet.", :green
 end
 
+# API apps: pagination travels in response headers (exposed by config/initializers/cors.rb).
+base_controller = "app/controllers/api/v1/base_controller.rb"
+if api_only && File.exist?(base_controller) && !File.read(base_controller).include?("Pagy::Method")
+  inject_into_file base_controller, after: "    class BaseController < ApplicationController\n" do
+    <<~RUBY.indent(6)
+      include Pagy::Method
+
+      # In an action: `@pagy, posts = pagy(:offset, Post.order(:id))`. The headers
+      # (link, current-page, page-limit, total-pages, total-count) are added here.
+      after_action { response.headers.merge!(@pagy.headers_hash) if @pagy }
+
+    RUBY
+  end
+end
+
 # Docs GitHub = https://github.com/ddnexus/pagy?tab=readme-ov-file
 # Docs Pagy = https://ddnexus.github.io/pagy/guides/quick-start/
 # Docs Pagy Stylesheets (CSS or Tailwind) = https://ddnexus.github.io/pagy/resources/stylesheets/
 #
-# Usage in controllers:
-#
-# Include the pagy method where you are going to use it (usually `app/controllers/ApplicationController`):
-# include Pagy::Method
-#
-# `app/controllers/your_controller.rb`
-# def index
-#   @pagy, @records = pagy(YourModel.all, items: 10)
-# end
-#
-# Usage in views:
-#
-# <!-- Views -->
-# <%== @pagy.series_nav %>  <!-- Navigation -->
-# <% @records.each do |record| %>
-#   <%= record.name %>
-# <% end %>
-
-# POST-INSTALL: Pagy setup remaining:
-#   1. Add `include Pagy::Backend` to ApplicationController
-#   2. Add `include Pagy::Frontend` to ApplicationHelper
-#   3. Use in controllers: @pagy, @records = pagy(Model.all, limit: 12)
-#   4. Use in views: <%== pagy_bootstrap_nav(@pagy) %>
+# Usage (Pagy 43: `Pagy::Backend`, `Pagy::Frontend` and `pagy_bootstrap_nav` no longer exist):
+#   Controller:  include Pagy::Method   (e.g. in ApplicationController)
+#                @pagy, @records = pagy(:offset, Model.order(:id), limit: 12)
+#   View:        <%== @pagy.series_nav(:bootstrap) %>   (Bootstrap)
+#                <%== @pagy.series_nav %>               (plain CSS / Tailwind)
+#   JSON API:    response.headers.merge!(@pagy.headers_hash)
 
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
-main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb"]
+main_templates = ["bootstrap.rb", "custom.rb", "tailwind.rb", "api.rb"]
 in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }
 
 if in_main_template
