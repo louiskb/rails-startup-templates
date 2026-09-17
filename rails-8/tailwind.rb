@@ -145,7 +145,13 @@ if should_install?("auth", "Install authentication? (y/n)")
     end
   when "r"
     say "Rails 8 native Authentication installing...", :cyan
-    file "authentication.txt", "confirm"
+    if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
+      # DEVISE=true already added Devise. shared/authentication.rb would see it and `exit`,
+      # which silently ends `rails new` partway through `after_bundle`.
+      say "Devise is already being installed (DEVISE=true): skipping Rails 8 authentication.", :yellow
+    else
+      file "authentication.txt", "confirm"
+    end
   else
     say "No Authentication installed.", :yellow
   end

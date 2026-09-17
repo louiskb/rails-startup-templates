@@ -19,12 +19,18 @@ nav_item = ->(link) { [ %(<li class="nav-item">), %(  #{link}), "</li>" ] }
 # Lines inside <ul class="navbar-nav">, relative indentation only.
 items = nav_item.call(%(<%= link_to "Home", #{home_path}, class: "nav-link" %>))
 
-if File.exist?("config/initializers/devise.rb")
+user_model = File.exist?("app/models/user.rb") ? File.read("app/models/user.rb") : ""
+
+# Devise links need a Devise User (an app whose only Devise model is ActiveAdmin's AdminUser has
+# no user_signed_in? helper), and Sign up needs :registerable.
+if File.exist?("config/initializers/devise.rb") && user_model.match?(/^\s*devise /)
   items += [ "<% if user_signed_in? %>" ]
   items += nav_item.call(%(<%= link_to "Log out", destroy_user_session_path, data: { turbo_method: :delete }, class: "nav-link" %>)).map { |line| "  #{line}" }
   items += [ "<% else %>" ]
   items += nav_item.call(%(<%= link_to "Log in", new_user_session_path, class: "nav-link" %>)).map { |line| "  #{line}" }
-  items += nav_item.call(%(<%= link_to "Sign up", new_user_registration_path, class: "nav-link" %>)).map { |line| "  #{line}" }
+  if user_model.include?(":registerable")
+    items += nav_item.call(%(<%= link_to "Sign up", new_user_registration_path, class: "nav-link" %>)).map { |line| "  #{line}" }
+  end
   items += [ "<% end %>" ]
 elsif File.exist?("app/controllers/concerns/authentication.rb")
   items += [ "<% if authenticated? %>" ]

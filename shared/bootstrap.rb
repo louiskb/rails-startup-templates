@@ -2,8 +2,12 @@
 # Bootstrap shared template - can be applied to new OR existing Rails apps.
 
 # GUARD 1: Skip if already installed
-if File.exist?("app/assets/stylesheets") && Dir.glob("app/assets/stylesheets/*bootstrap*").any?
-  say "Bootstrap already installed (stylesheets found), skipping...", :yellow
+# Le Wagon's stylesheets keep their Bootstrap variables in config/, so the old top-level
+# `*bootstrap*` glob never matched, and a re-run wiped app/assets/stylesheets.
+application_js = "app/javascript/application.js"
+if File.exist?("app/assets/stylesheets/config/_bootstrap_variables.scss") ||
+    (File.exist?(application_js) && File.read(application_js).include?('import "bootstrap"'))
+  say "Bootstrap already installed (Le Wagon stylesheets or a bootstrap import found), skipping...", :yellow
   exit
 end
 

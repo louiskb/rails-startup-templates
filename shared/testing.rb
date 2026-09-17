@@ -13,7 +13,7 @@ gemfile = File.read("Gemfile")
 
 # GUARD 1: Skip if Testing Template is already installed.
 # ** special wildcard that means "match all directories recursively", digging into every folder and subfolder under spec/ to find matching files.
-if gemfile.match?(/^gem.*['"]rspec-rails['"]/) && Dir["spec/**/*"].any? && File.exist?("spec/spec_helper.rb")
+if gemfile.match?(/^\s*gem.*['"]rspec-rails['"]/) && Dir["spec/**/*"].any? && File.exist?("spec/spec_helper.rb")
   say "RSpec + specs directory + spec_helper.rb found, skipping", :yellow
   exit
 end
@@ -23,7 +23,7 @@ end
 # Fresh apps: main template already added gem → this skips.
 gems_added = false
 
-unless gemfile.match?(/^gem.*['"]rspec-rails['"]/)
+unless gemfile.match?(/^\s*gem.*['"]rspec-rails['"]/)
   say "Adding `rspec-rails`...", :cyan
   inject_into_file "Gemfile", after: "group :development, :test do\n" do
     <<~RUBY
@@ -35,7 +35,7 @@ unless gemfile.match?(/^gem.*['"]rspec-rails['"]/)
   gems_added = true
 end
 
-unless gemfile.match?(/^gem.*['"]factory_bot_rails['"]/)
+unless gemfile.match?(/^\s*gem.*['"]factory_bot_rails['"]/)
   say "Adding `factory_bot_rails`...", :cyan
   inject_into_file "Gemfile", after: "group :development, :test do\n" do
     <<~RUBY
@@ -47,7 +47,7 @@ unless gemfile.match?(/^gem.*['"]factory_bot_rails['"]/)
   gems_added = true
 end
 
-unless gemfile.match?(/^gem.*['"]faker['"]/)
+unless gemfile.match?(/^\s*gem.*['"]faker['"]/)
   say "Adding `faker`...", :cyan
   inject_into_file "Gemfile", after: "group :development, :test do\n" do
     <<~RUBY
@@ -59,7 +59,7 @@ unless gemfile.match?(/^gem.*['"]faker['"]/)
   gems_added = true
 end
 
-unless gemfile.match?(/^gem.*['"]shoulda-matchers['"]/)
+unless gemfile.match?(/^\s*gem.*['"]shoulda-matchers['"]/)
   inject_into_file "Gemfile", after: "group :development, :test do\n" do
     <<~RUBY
       gem "shoulda-matchers"

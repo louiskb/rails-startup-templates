@@ -185,7 +185,13 @@ if should_install?("auth", "Install authentication? (y/n)")
 
     # Rails 8 native `authentication` does not have a gem.
     # Create a `.txt` file to use later inside `after_bundle` as reference to `apply source_path(shared/authentication.rb)`.
-    file "authentication.txt", "confirm"
+    if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
+      # DEVISE=true already added Devise. shared/authentication.rb would see it and `exit`,
+      # which silently ends `rails new` partway through `after_bundle`.
+      say "Devise is already being installed (DEVISE=true): skipping Rails 8 authentication.", :yellow
+    else
+      file "authentication.txt", "confirm"
+    end
   else
     say "No Authentication installed.", :yellow
   end

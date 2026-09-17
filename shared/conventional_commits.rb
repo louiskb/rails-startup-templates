@@ -49,8 +49,20 @@ else
   chmod hook_path, 0o755
 end
 
-# This clone
-run "git config core.hooksPath .githooks" if File.directory?(".git")
+# This clone. Don't take over hooks another tool manages: pointing core.hooksPath at .githooks
+# over an existing hooksPath (husky, lefthook) or real hooks in .git/hooks (overcommit,
+# pre-commit) would silently stop them running.
+existing_hooks_path = File.directory?(".git") ? `git config --get core.hooksPath`.strip : ""
+local_hooks = Dir[".git/hooks/*"].reject { |hook| hook.end_with?(".sample") }
+if !File.directory?(".git")
+  say "Not a git repository: bin/setup enables the hook once it is one.", :yellow
+elsif !existing_hooks_path.empty? && existing_hooks_path != ".githooks"
+  say "core.hooksPath is already #{existing_hooks_path}: left unchanged. Add .githooks/commit-msg to that setup instead.", :yellow
+elsif local_hooks.any?
+  say "Hooks already in .git/hooks (#{local_hooks.map { |hook| File.basename(hook) }.join(", ")}): core.hooksPath left unset, since it would disable them. Copy .githooks/commit-msg into .git/hooks instead.", :yellow
+else
+  run "git config core.hooksPath .githooks"
+end
 
 # Fresh clones: bin/setup turns the hook on. `system` (not `system!`) so a copy without .git
 # (e.g. a downloaded zip) still sets up.

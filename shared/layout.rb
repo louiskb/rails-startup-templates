@@ -80,9 +80,6 @@ fonts_scss = File.exist?(fonts_path) ? File.read(fonts_path) : ""
 google_fonts_url = fonts_scss[/^@import url\(['"]?(https:\/\/fonts\.googleapis\.com[^'")]+)['"]?\);/, 1]
 
 if framework == :bootstrap && google_fonts_url && File.exist?(layout_path)
-  gsub_file fonts_path, /^\/\/ Import Google fonts\n@import url\(.*\);\n/,
-    "// Google Fonts load from <link> tags in app/views/layouts/application.html.erb.\n"
-
   # Before Rails' "Includes all stylesheet files" comment when present, else the tag itself.
   inject_into_file layout_path, before: /^[ \t]*(<%# Includes all stylesheet files[^\n]*\n[ \t]*)?<%= stylesheet_link_tag/ do
     <<~ERB.indent(4) + "\n"
@@ -92,5 +89,13 @@ if framework == :bootstrap && google_fonts_url && File.exist?(layout_path)
     ERB
   end
 
-  say "Google Fonts moved from a CSS @import to <link> tags in the layout.", :green
+  # Remove the @import only once the <link> tags are really in the layout (a customised layout
+  # with no stylesheet_link_tag line gets no injection, and would otherwise lose its fonts).
+  if File.read(layout_path).include?("fonts.googleapis.com")
+    gsub_file fonts_path, /^\/\/ Import Google fonts\n@import url\(.*\);\n/,
+      "// Google Fonts load from <link> tags in app/views/layouts/application.html.erb.\n"
+    say "Google Fonts moved from a CSS @import to <link> tags in the layout.", :green
+  else
+    say "No stylesheet_link_tag in the layout: Google Fonts stay as a CSS @import in config/_fonts.scss.", :yellow
+  end
 end
