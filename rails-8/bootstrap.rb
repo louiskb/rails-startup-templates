@@ -286,7 +286,9 @@ end
 
 # navbar
 if should_install?("navbar", "Install NavBar? (y/n)")
-  run "curl -L https://raw.githubusercontent.com/lewagon/awesome-navbars/master/templates/_navbar_wagon.html.erb > app/views/shared/_navbar.html.erb"
+  # Placeholder = "navbar chosen" flag. shared/navbar.rb (in `after_bundle`, after the auth
+  # modules) replaces it with links for whichever auth the app ended up with.
+  file "app/views/shared/_navbar.html.erb", "<%# navbar placeholder: shared/navbar.rb replaces this file %>\n"
 end
 
 # pagination
