@@ -154,44 +154,19 @@ environment generators
 # User says YES → add gem to Gemfile
 # User says NO → skip (don't add gem)
 
-# devise
+# devise (no version pin: ActiveAdmin 3.5+ supports Devise 5)
 if should_install?("devise", "Install Devise? (y/n)")
-  # Add devise gem to Gemfile (before `bundle install`)
-  # Note the blank line inside the heredoc to keep "Gemfile" formatting clean.
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "devise"
 
-  # Default to Devise v4.9 if `DEVISE=true` (ENV variable set in shell functions) (non-interactive).
-  if ENV.fetch("DEVISE", "") == "true"
-    inject_into_file "Gemfile", before: "group :development, :test do" do
-      <<~RUBY
-        gem "devise", "~> 4.9"
-
-      RUBY
-    end
-    say("`DEVISE=true` detected: Installing Devise v4.9 for Active Admin compatibility.", :green)
-  else
-    # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
-    devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
-
-    gem_line = if devise_choice == "y"
-      'gem "devise", "~> 4.9"'
-    else
-      'gem "devise"'
-    end
-
-    inject_into_file "Gemfile", before: "group :development, :test do" do
-      <<~RUBY
-        #{gem_line}
-
-      RUBY
-    end
-
-    say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
+    RUBY
   end
 end
 
-# admin (devise v4.9 required before installation) - an admin dashboard for CRUD operations on models.
-if File.read("Gemfile").include?('gem "devise", "~> 4.9"')
-  if should_install?("admin", "Install Active Admin (devise required)? (y/n)")
+# admin (requires Devise) - an admin dashboard for CRUD operations on models.
+if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
+  if should_install?("admin", "Install Active Admin (uses Devise)? (y/n)")
     inject_into_file "Gemfile", before: "group :development, :test do" do
       <<~RUBY
         gem "activeadmin"

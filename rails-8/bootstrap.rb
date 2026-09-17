@@ -156,15 +156,16 @@ environment generators
 # User says YES → add gem to Gemfile
 # User says NO → skip (don't add gem)
 
-# Default to Devise v4.9 if `DEVISE=true` (ENV variable set in shell functions) (non-interactive).
+# Devise without prompts when `DEVISE=true` (the `-all` shell functions). No version pin:
+# ActiveAdmin 3.5+ supports Devise 5 (`DEVISE = ">= 4.0", "< 6"` in its dependency check).
 if ENV.fetch("DEVISE", "") == "true"
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
-      gem "devise", "~> 4.9"
+      gem "devise"
 
     RUBY
   end
-  say("`DEVISE=true` detected: Installing Devise v4.9 for Active Admin compatibility.", :green)
+  say("`DEVISE=true` detected: installing Devise.", :green)
 end
 
 # Authentication choice (first interactive prompt)
@@ -175,28 +176,15 @@ if should_install?("auth", "Install authentication? (y/n)")
   # Add appropriate gems first (if any) and `apply` shared templates (`shared/bootstrap.rb` or `shared/tailwind.rb`) inside `after_bundle` after running `bundle install` with the correct gems already added.
   case auth_choice
   when "d"
-    # devise
-    if should_install?("devise", "Install Devise? (y/n)")
-      # Add devise gem to Gemfile (before `bundle install`)
-
-      # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
-      devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
-
-      gem_line = if devise_choice == "y"
-        'gem "devise", "~> 4.9"'
-      else
-        'gem "devise"'
-      end
-
-      # Note the blank line inside the heredoc to keep "Gemfile" formatting clean.
+    # devise (skipped when DEVISE=true already added it above)
+    unless File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
       inject_into_file "Gemfile", before: "group :development, :test do" do
         <<~RUBY
-          #{gem_line}
+          gem "devise"
 
         RUBY
       end
-
-      say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
+      say("Devise added.", :green)
     end
   when "r"
     say "Rails 8 native Authentication installing...", :cyan
@@ -209,9 +197,9 @@ if should_install?("auth", "Install authentication? (y/n)")
   end
 end
 
-# admin (devise v4.9 required before installation) - an admin dashboard for CRUD operations on models.
-if File.read("Gemfile").include?('gem "devise", "~> 4.9"')
-  if should_install?("admin", "Install Active Admin (devise required)? (y/n)")
+# admin (requires Devise) - an admin dashboard for CRUD operations on models.
+if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
+  if should_install?("admin", "Install Active Admin (uses Devise)? (y/n)")
     inject_into_file "Gemfile", before: "group :development, :test do" do
       <<~RUBY
         gem "activeadmin"

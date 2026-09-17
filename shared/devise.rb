@@ -23,24 +23,16 @@ end
 # Fresh apps: main template already added gem → this skips.
 gemfile = File.read("Gemfile")
 
-unless gemfile.match?(/^gem.*['"]devise['"]/)
-  # Interactive version choice - choose Devise v4.9 for Active Admin or the latest version.
-  devise_choice = ask("Use Devise v4.9 for Active Admin? (y = yes, n = latest version)", limited_to: %w[y n]).downcase
-
-  gem_line = if devise_choice == "y"
-    'gem "devise", "~> 4.9"'
-  else
-    'gem "devise"'
-  end
-
+unless gemfile.match?(/^\s*gem ["']devise["']/)
+  # No version pin: ActiveAdmin 3.5+ supports Devise 5.
   inject_into_file "Gemfile", before: "group :development, :test do" do
     <<~RUBY
-      #{gem_line}
+      gem "devise"
 
     RUBY
   end
 
-  say("Devise #{devise_choice == 'y' ? 'v4.9' : 'latest version'} added.", :green)
+  say("Devise added.", :green)
 
   # `bundle install` ONLY if it's needed (bundle check fails → bundle install).
   # `bundle check` compares Gemfile vs Gemfile.lock to see if they're the same.
