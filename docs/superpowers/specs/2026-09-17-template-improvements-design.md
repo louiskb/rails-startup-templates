@@ -367,7 +367,10 @@ Every app is generated with the real template in the scratchpad; test DBs are dr
 - `~/.claude/notes/rails-template-improvements.md`: move items to Implemented, correct the
   `_body.scss` note, log the out-of-scope findings (§11).
 
-## 10. Open questions for Louis (recommendation first)
+## 10. Open questions — resolved 2026-09-17
+
+**Answers:** Q1 drop the pin, *if proven* · Q2 stop slugging by email · Q3 yes, Tailwind too ·
+Q4 asked after the API template is verified · Q5 (a): push + PR + `/self-review`.
 
 - **Q1. Drop the Devise `~> 4.9` pin?**
   - ActiveAdmin 3.5.0+ supports Devise 5 (`DEVISE = ">= 4.0", "< 6"`), and Devise 5.0.4 carries a
