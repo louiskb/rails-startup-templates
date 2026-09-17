@@ -20,6 +20,15 @@ end
 
 generate "active_admin:install"
 
+# Sprockets apps whose application.css does `require_tree .` (Rails 7 Tailwind / vanilla) would
+# bundle the generated active_admin.scss into every public page, restyling the app's own forms
+# and buttons. ActiveAdmin links active_admin.css itself, so leave it out of application.css.
+application_css = "app/assets/stylesheets/application.css"
+if File.exist?("app/assets/stylesheets/active_admin.scss") && File.exist?(application_css) &&
+   File.read(application_css).match?(/^\s*\*= require_tree \.$/) && !File.read(application_css).include?("stub active_admin")
+  inject_into_file application_css, " *= stub active_admin\n", after: /^\s*\*= require_tree \.\n/
+end
+
 # Create AdminUser model with Devise (Devise must be pre-installed)
 unless File.exist?("app/models/admin_user.rb")
   generate("devise", "AdminUser")

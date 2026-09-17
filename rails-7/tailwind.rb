@@ -148,6 +148,24 @@ if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
 
       RUBY
     end
+
+    # ActiveAdmin writes app/assets/stylesheets/active_admin.scss, and the Sprockets manifest links
+    # every stylesheet, so without a Sass compiler every page 500s (`LoadError: sassc`). The
+    # Bootstrap choice already adds sassc-rails.
+    unless File.read("Gemfile").match?(/^\s*gem ["']sassc-rails["']/)
+      inject_into_file "Gemfile", before: "group :development, :test do" do
+        <<~RUBY
+          gem "sassc-rails"
+
+        RUBY
+      end
+
+      # sassc-rails also makes SassC the CSS minifier, and SassC can't parse Tailwind 4's output
+      # (`rgb(from red r g b)`): the test build and `assets:precompile` fail. Skip minification.
+      if File.read("Gemfile").match?(/^\s*gem ["']tailwindcss-rails["']/)
+        environment "config.assets.css_compressor = nil"
+      end
+    end
   end
 end
 
