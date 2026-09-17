@@ -62,6 +62,10 @@ file "config/initializers/simple_form_tailwind.rb", <<~RUBY
   end
 RUBY
 
+# Layout shell: <main> container, footer, Google Fonts <link> tags (sibling shared/layout.rb;
+# File.dirname(__FILE__) works for both a local path and a raw GitHub URL).
+apply File.join(File.dirname(__FILE__), "layout.rb")
+
 # STANDALONE MIGRATION SUPPORT
 main_templates = ["custom.rb"]
 in_main_template = caller_locations.any? { |loc| loc.label == 'after_bundle' || loc.path =~ Regexp.union(main_templates) }

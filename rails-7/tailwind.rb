@@ -77,6 +77,9 @@ inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
   HTML
 end
 
+# Layout shell: <main> container, footer, Google Fonts <link> tags (shared/layout.rb)
+apply source_path("shared/layout.rb")
+
 # README
 markdown_readme_content = <<~MARKDOWN
   Rails app generated with [louiskb/rails-startup-templates](https://github.com/louiskb/rails-startup-templates), created by [Louis Bourne](https://louisbourne.me).
