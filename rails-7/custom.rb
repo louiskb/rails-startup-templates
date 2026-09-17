@@ -106,10 +106,18 @@ if should_install?("tailwind", "Install CSS framework? (y/n)")
   when "b"
     if should_install?("bootstrap", "Install Bootstrap? (y/n)")
       say "Bootstrap installing...", :cyan
+      # sprockets-rails: Rails 7.1 apps already have it; a second copy is a Bundler/DuplicatedGem offense.
+      unless File.read("Gemfile").match?(/^\s*gem ["']sprockets-rails["']/)
+        inject_into_file "Gemfile", before: "group :development, :test do" do
+          <<~RUBY
+            gem "sprockets-rails"
+          RUBY
+        end
+      end
+
       # Core Bootstrap gems
       inject_into_file "Gemfile", before: "group :development, :test do" do
         <<~RUBY
-          gem "sprockets-rails"
           gem "bootstrap", "~> 5.3"
           gem "autoprefixer-rails"
           gem "font-awesome-sass", "~> 6.1"

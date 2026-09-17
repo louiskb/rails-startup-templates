@@ -64,10 +64,18 @@ inject_into_file "Gemfile", before: "group :development, :test do" do
   RUBY
 end
 
+# sprockets-rails: Rails 7.1 apps already have it; a second copy is a Bundler/DuplicatedGem offense.
+unless File.read("Gemfile").match?(/^\s*gem ["']sprockets-rails["']/)
+  inject_into_file "Gemfile", before: "group :development, :test do" do
+    <<~RUBY
+      gem "sprockets-rails"
+    RUBY
+  end
+end
+
 # Gemfile
 inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
-      gem "sprockets-rails"
       gem "bootstrap", "~> 5.3"
       gem "autoprefixer-rails"
       gem "font-awesome-sass", "~> 6.1"
