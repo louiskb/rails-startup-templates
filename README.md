@@ -58,7 +58,7 @@ rails _7.1.6_ new my_app \
 - Git initialization with a .gitignore that also covers `.claude/settings.local.json` and keeps `.env.example`
 - Conventional Commits enforced by a versioned `.githooks/commit-msg` hook (`bin/setup` enables it in fresh clones)
 - Heroku/Kamal deployment preparation
-- RuboCop configuration, with generator output autocorrected so a new app passes `bin/rubocop`
+- RuboCop configuration, with generator output autocorrected so a new app passes its own lint (Rails 8: `bin/rubocop`; Rails 7: `bundle exec rubocop`, when Dev Tools is installed)
 
 ### Rails 8 Templates Specifics
 - **Asset Pipeline**: Propshaft (Rails 8 default) for Tailwind and vanilla CSS; the Bootstrap templates swap in Sprockets for SCSS
@@ -72,7 +72,7 @@ rails _7.1.6_ new my_app \
 - **Traditional approach**: Full asset compilation pipeline
 - **Gem-based assets**: Bootstrap, Font Awesome via gems
 - **SCSS/SASS**: Full preprocessing support
-- **RuboCop**: Le Wagon's config (Rails 7.1 generates none)
+- **RuboCop**: Le Wagon's config (Rails 7.1 generates none); RuboCop is in the bundle only with Dev Tools
 - **json pin**: `gem "json", "< 3"` permanently (Rails 7.1 is end-of-life and incompatible with json 3)
 
 ### Bootstrap Template Specifics

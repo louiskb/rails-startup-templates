@@ -109,7 +109,7 @@ rails new test_app -d postgresql -m rails-8/bootstrap.rb
 cd existing_app && rails app:template LOCATION=../rails-startup-templates/shared/testing.rb
 
 # Test with all modules (non-interactive)
-DEVISE=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true PAGINATION=true \
+DEVISE=true AUTH=false NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true PAGINATION=true \
 FRIENDLY_URLS=true ADMIN=true IMAGE_UPLOAD_CLOUDINARY=true RUBY_LLM=true CLAUDE_CODE=true \
 rails new test_app -d postgresql -m rails-8/bootstrap.rb
 
