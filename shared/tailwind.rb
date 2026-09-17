@@ -2,8 +2,9 @@
 # Tailwind shared template - can be applied to new OR existing Rails apps.
 
 # GUARD 1: Skip if already installed
-if File.exist?("config/tailwind.config.js")
-  say "Tailwind already installed (config/tailwind.config.js found), skipping...", :yellow
+# Tailwind 4 (tailwindcss-rails 4.x) creates app/assets/tailwind/application.css and no config/tailwind.config.js.
+if File.exist?("config/tailwind.config.js") || File.exist?("app/assets/tailwind/application.css")
+  say "Tailwind already installed, skipping...", :yellow
   exit
 end
 

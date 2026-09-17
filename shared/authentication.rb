@@ -6,9 +6,7 @@
 gemfile = File.read("Gemfile")
 
 # GUARD 1: Skip entire template if native `authentication` or `devise` is already installed.
-# In Ruby, `Dir.exist?("path/")` returns `true` if the path points to an existing directory, and `false` otherwise.
-# if gemfile.include?("devise") || Dir.exist?("app/models/session.rb")
-if gemfile.match?(/^gem.*['"]devise['"]/) || File.exist?("app/controllers/concerns/authentication.rb") || File.exist?("app/models/session.rb") || File.exist?("app/models/current.rb")
+if gemfile.match?(/^\s*gem ["']devise["']/) || File.exist?("app/controllers/concerns/authentication.rb") || File.exist?("app/models/session.rb") || File.exist?("app/models/current.rb")
   say "Native Authentication (Rails 8) or Devise is already installed, skipping...", :yellow
   exit
 end
@@ -26,7 +24,7 @@ route "resource :registration, only: [:new, :create]"
 # Registration controller
 file "app/controllers/registrations_controller.rb", <<~RUBY
   class RegistrationsController < ApplicationController
-    allow_unauthenticated_access!
+    allow_unauthenticated_access only: %i[new create]
 
     def new
       @user = User.new
@@ -45,58 +43,41 @@ file "app/controllers/registrations_controller.rb", <<~RUBY
     private
 
     def user_params
-      params.require(:user).permit(:email, :password, :password_confirmation)
+      params.expect(user: [ :email_address, :password, :password_confirmation ])
     end
   end
 RUBY
 
-# Registration new sign-up view (Simple Form + flashes)
-# Dynamically styled depending on selected CSS framework.
+# Registration new sign-up view (Simple Form). The layout already renders flashes.
 # Add navbar link: `link_to "Sign up", new_registration_path`.
-if File.exist?("app/assets/stylesheets") && Dir.glob("app/assets/stylesheets/*bootstrap*").any?
-  # Bootstrap
-  file "app/views/registrations/new.html.erb", <<~HTML
-    <%= render "shared/flashes" %>
-    <h1>Sign up</h1>
-    <%= simple_form_for @user do |f| %>
-      <%= f.input :email_address %>
-      <%= f.input :password %>
-      <%= f.input :password_confirmation %>
-      <%= f.button :submit, "Sign up", class: "btn btn-primary my-3" %>
-    <% end %>
-  HTML
-elsif File.exist?("config/tailwind.config.js")
-  # Tailwind CSS
-  file "app/views/registrations/new.html.erb", <<~HTML
-    <%= render "shared/flashes" %>
-    <h1>Sign up</h1>
-    <%= simple_form_for @user do |f| %>
-      <%= f.input :email_address %>
-      <%= f.input :password %>
-      <%= f.input :password_confirmation %>
-      <%= f.button :submit, "Sign up", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded my-3" %>
-    <% end %>
-  HTML
-else
-  # Vanilla CSS
-  file "app/views/registrations/new.html.erb", <<~HTML
-    <%= render "shared/flashes" %>
-    <h1>Sign up</h1>
-    <%= simple_form_for @user do |f| %>
-      <%= f.input :email_address %>
-      <%= f.input :password %>
-      <%= f.input :password_confirmation %>
-      <%= f.button :submit, "Sign up" %>
-    <% end %>
-  HTML
+# CSS framework detected from the Gemfile: Tailwind 4 has no config/tailwind.config.js,
+# and Le Wagon's stylesheets keep bootstrap variables inside config/, so file checks miss both.
+button_class = if gemfile.match?(/^\s*gem ["']bootstrap["']/)
+  "btn btn-primary my-3"
+elsif gemfile.match?(/^\s*gem ["']tailwindcss-rails["']/)
+  "my-3 rounded bg-blue-600 px-4 py-2 font-bold text-white hover:bg-blue-700"
 end
+submit_options = button_class ? %(, class: "#{button_class}") : ""
 
-# Home page skip auth
-inject_into_file "app/controllers/pages_controller.rb", after: "class PagesController" do
-  "\n  skip_before_action :authenticate_user!, only: :home\n"
+# `url: registration_path`: `simple_form_for @user` alone would post to `users_path`, which doesn't exist.
+file "app/views/registrations/new.html.erb", <<~HTML
+  <h1>Sign up</h1>
+
+  <%= simple_form_for @user, url: registration_path do |f| %>
+    <%= f.input :email_address %>
+    <%= f.input :password %>
+    <%= f.input :password_confirmation %>
+    <%= f.button :submit, "Sign up"#{submit_options} %>
+  <% end %>
+HTML
+
+# PagesController#home stays public (see the main templates' PagesController comment).
+pages_controller = "app/controllers/pages_controller.rb"
+if File.exist?(pages_controller) && !File.read(pages_controller).match?(/^\s*allow_unauthenticated_access/)
+  inject_into_file pages_controller, after: "class PagesController < ApplicationController\n" do
+    "  allow_unauthenticated_access only: :home\n\n"
+  end
 end
-
-# rails_command "db:migrate"
 
 # STANDALONE MIGRATION SUPPORT
 # Detect if shared template is called from standalone (`rails app:template`) vs from main template (`after_bundle` or e.g. `bootstrap.rb`).
