@@ -424,6 +424,9 @@ after_bundle do
   # bin/rubocop, and RuboCop is only in the bundle with the Dev Tools module.
   if File.read("Gemfile.lock").match?(/^    rubocop \(/)
     run "bundle exec rubocop -a > /dev/null || true"
+    # Le Wagon's config also flags ActiveAdmin's generated `end # content`; RuboCop calls that fix
+    # unsafe, but it only drops a comment.
+    run "bundle exec rubocop -A --only Style/CommentedKeyword > /dev/null || true"
     git add: "."
     run "git diff --cached --quiet || git commit -m 'style: autocorrect RuboCop offenses in generated code'"
   end
