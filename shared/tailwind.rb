@@ -43,7 +43,7 @@ end
 file "config/initializers/simple_form_tailwind.rb", <<~RUBY
   # Use this setup block to configure all options available in SimpleForm.
   SimpleForm.setup do |config|
-    # Tailwind CSS configuration
+    # Tailwind CSS 4 classes (v4 renamed shadow-sm/ring and dropped ring-opacity-*; its reset removes input borders)
     config.wrappers :tailwind, class: "mb-4" do |b|
       b.use :html5
       b.use :placeholder
@@ -53,12 +53,28 @@ file "config/initializers/simple_form_tailwind.rb", <<~RUBY
       b.optional :min_max
       b.optional :readonly
       b.use :label, class: "block text-sm font-medium text-gray-700 mb-1"
-      b.use :input, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50", error_class: "border-red-500"
+      b.use :input, class: "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-xs focus:border-indigo-300 focus:ring-3 focus:ring-indigo-200/50 focus:outline-hidden", error_class: "border-red-500"
+      b.use :error, wrap_with: { tag: "p", class: "mt-2 text-sm text-red-600" }
+      b.use :hint, wrap_with: { tag: "p", class: "mt-2 text-sm text-gray-500" }
+    end
+
+    # Checkboxes: a small box beside its label, not the full-width text-input styling above.
+    config.wrappers :tailwind_boolean, class: "mb-4" do |b|
+      b.use :html5
+      b.optional :readonly
+      b.wrapper tag: "div", class: "flex items-center gap-2" do |ba|
+        ba.use :input, class: "size-4 rounded border-gray-300 accent-indigo-600"
+        ba.use :label, class: "text-sm text-gray-700"
+      end
       b.use :error, wrap_with: { tag: "p", class: "mt-2 text-sm text-red-600" }
       b.use :hint, wrap_with: { tag: "p", class: "mt-2 text-sm text-gray-500" }
     end
 
     config.default_wrapper = :tailwind
+    config.wrapper_mappings = { boolean: :tailwind_boolean }
+    # Loaded after simple_form.rb (alphabetical), so these override its :nested and "btn" defaults.
+    config.boolean_style = :inline
+    config.button_class = "rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
   end
 RUBY
 

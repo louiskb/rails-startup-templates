@@ -39,6 +39,23 @@ def source_path(file)
   end
 end
 
+# Apply a shared module. Modules stop with `exit` when their guard finds them already installed,
+# which is right standalone (`rails app:template`), but inside `rails new` that `exit` would end
+# the whole generation: every later module, the migrations and the final commits skipped, with
+# the shell reporting success. A clean exit (status 0) now skips only that module; a failing one
+# (`exit 1`, `abort`) still stops the run. A skipped module leaves nothing to commit, and an empty
+# `git commit` would abort `rails new` too, so every commit after a module is guarded.
+def apply_shared(file)
+  padding = shell.padding
+  apply source_path(file)
+rescue SystemExit => e
+  raise unless e.success?
+
+  # Thor's `apply` only restores its output indent when the module runs to the end.
+  shell.padding = padding
+  say "#{file} exited early (its guard skipped it); continuing with the next step.", :yellow
+end
+
 # Ruby version pin: silences Heroku's "no Ruby version declared" warning.
 inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
@@ -305,58 +322,58 @@ after_bundle do
 
   # shared/devise.rb (API apps: it applies shared/devise_jwt.rb)
   if gemfile.match?(/^\s*gem "devise"$/)
-    apply source_path("shared/devise.rb")
+    apply_shared("shared/devise.rb")
     git add: "."
-    git commit: "-m 'feat: install devise with JWT authentication'"
+    run "git diff --cached --quiet || git commit -m 'feat: install devise with JWT authentication'"
   end
 
   # shared/dev_tools.rb
   if gemfile.include?('gem "annotaterb"')
-    apply source_path("shared/dev_tools.rb")
+    apply_shared("shared/dev_tools.rb")
     git add: "."
-    git commit: "-m 'feat: install dev tools (annotaterb, pry, awesome print, rubocop)'"
+    run "git diff --cached --quiet || git commit -m 'feat: install dev tools (annotaterb, pry, awesome print, rubocop)'"
   end
 
   # shared/testing.rb
   if gemfile.include?('gem "rspec-rails"')
-    apply source_path("shared/testing.rb")
+    apply_shared("shared/testing.rb")
     git add: "."
-    git commit: "-m 'feat: install testing'"
+    run "git diff --cached --quiet || git commit -m 'feat: install testing'"
   end
 
   # shared/image_upload_cloudinary.rb
   if gemfile.include?('gem "cloudinary"')
-    apply source_path("shared/image_upload_cloudinary.rb")
+    apply_shared("shared/image_upload_cloudinary.rb")
     git add: "."
-    git commit: "-m 'feat: install active storage and cloudinary'"
+    run "git diff --cached --quiet || git commit -m 'feat: install active storage and cloudinary'"
   end
 
   # shared/pagination.rb
   if gemfile.include?('gem "pagy"')
-    apply source_path("shared/pagination.rb")
+    apply_shared("shared/pagination.rb")
     git add: "."
-    git commit: "-m 'feat: install pagy pagination'"
+    run "git diff --cached --quiet || git commit -m 'feat: install pagy pagination'"
   end
 
   # shared/ruby_llm.rb
   if gemfile.include?('gem "ruby_llm"')
-    apply source_path("shared/ruby_llm.rb")
+    apply_shared("shared/ruby_llm.rb")
     git add: "."
-    git commit: "-m 'feat: install ruby_llm'"
+    run "git diff --cached --quiet || git commit -m 'feat: install ruby_llm'"
   end
 
   # shared/security.rb
   if gemfile.include?('gem "secure_headers"')
-    apply source_path("shared/security.rb")
+    apply_shared("shared/security.rb")
     git add: "."
-    git commit: "-m 'feat: install security'"
+    run "git diff --cached --quiet || git commit -m 'feat: install security'"
   end
 
   # shared/claude_code.rb: last module, so it can see everything installed above.
   if install_claude_code
-    apply source_path("shared/claude_code.rb")
+    apply_shared("shared/claude_code.rb")
     git add: "."
-    git commit: "-m 'chore: add Claude Code project setup'"
+    run "git diff --cached --quiet || git commit -m 'chore: add Claude Code project setup'"
   end
 
   # Run all migrations towards the end of `after_bundle`.
@@ -376,9 +393,9 @@ after_bundle do
 
   # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
   # Last on purpose: every commit above is made before the hook exists.
-  apply source_path("shared/conventional_commits.rb")
+  apply_shared("shared/conventional_commits.rb")
   git add: "."
-  git commit: "-m 'chore: enforce conventional commits with a commit-msg hook'"
+  run "git diff --cached --quiet || git commit -m 'chore: enforce conventional commits with a commit-msg hook'"
 
   say "✅ Rails 8 API template installation complete! 🚀🔥", :green
 end

@@ -34,7 +34,7 @@ end
 
 # Create `pagy.rb` initializer - Configure global options and special features. No generator needed.
 unless File.exist?("config/initializers/pagy.rb")
-  run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/config/pagy.rb > config/initializers/pagy.rb"
+  run "curl -fsSL https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/config/pagy.rb > config/initializers/pagy.rb"
 
   say "Added `pagy.rb` initializer.", :green
 end
@@ -42,8 +42,8 @@ end
 # Integrate the Stylesheets (CSS or Tailwind) into Rails app for native Pagy helpers. No additional CSS file is needed for Bootstrap.
 if api_only
   say "API-only app: no pagination stylesheet (JSON responses carry pagination headers).", :yellow
-elsif !gemfile.match?(/^gem.*['"]tailwindcss-rails['"]/) && !gemfile.match?(/^gem.*['"]bootstrap['"]/)
-  run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy.css > app/assets/stylesheets/pagy.css"
+elsif !gemfile.match?(/^\s*gem.*['"]tailwindcss-rails['"]/) && !gemfile.match?(/^\s*gem.*['"]bootstrap['"]/)
+  run "curl -fsSL https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy.css > app/assets/stylesheets/pagy.css"
 
   inject_into_file "app/assets/stylesheets/pagy.css", before: ".pagy {" do
     <<~CSS
@@ -52,16 +52,24 @@ elsif !gemfile.match?(/^gem.*['"]tailwindcss-rails['"]/) && !gemfile.match?(/^ge
   end
 
   say "Added `pagy.css` stylesheet.", :green
-elsif gemfile.match?(/^gem.*['"]tailwindcss-rails['"]/)
-  run "curl -L https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy-tailwind.css > app/assets/stylesheets/pagy-tailwind.css"
+elsif gemfile.match?(/^\s*gem.*['"]tailwindcss-rails['"]/)
+  tailwind_entry = "app/assets/tailwind/application.css"
+  if File.exist?(tailwind_entry)
+    # Tailwind 4 compiles only what app/assets/tailwind/application.css imports. The old location,
+    # app/assets/stylesheets/, was served raw: its `@import "tailwindcss";` made the browser request
+    # /assets/tailwindcss (a console error on every page) and the Pagy nav stayed unstyled.
+    run "curl -fsSL https://raw.githubusercontent.com/ddnexus/pagy/refs/heads/master/gem/stylesheets/pagy-tailwind.css > app/assets/tailwind/pagy.css"
+    # application.css already imports tailwindcss; a second import would duplicate the whole framework.
+    gsub_file "app/assets/tailwind/pagy.css", /\A@import "tailwindcss";\n+/,
+      "/* Pagy's Tailwind styles (https://ddnexus.github.io/pagy/resources/stylesheets/), imported by application.css */\n\n"
+    unless File.read(tailwind_entry).include?('@import "./pagy.css"')
+      inject_into_file tailwind_entry, "@import \"./pagy.css\";\n", after: /^@import "tailwindcss";\n/
+    end
 
-  inject_into_file "app/assets/stylesheets/pagy-tailwind.css", before: "@tailwind base;" do
-    <<~CSS
-      /* For reference: `stylesheet_path = Pagy::ROOT.join('stylesheets/pagy-tailwind.css')`\n */
-    CSS
+    say "Added Pagy's Tailwind styles to the Tailwind build (app/assets/tailwind/pagy.css).", :green
+  else
+    say "Tailwind 3 app: Pagy 43's Tailwind stylesheet uses Tailwind 4 syntax. Style the nav by hand (https://ddnexus.github.io/pagy/resources/stylesheets/).", :yellow
   end
-
-  say "Added `pagy-tailwind.css` stylesheet.", :green
 end
 
 # API apps: pagination travels in response headers (exposed by config/initializers/cors.rb).

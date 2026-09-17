@@ -102,6 +102,7 @@ if rspec
   helpers << "- Devise: `sign_in user` in request and system specs (`spec/support/devise.rb`)." if %i[devise devise_jwt].include?(auth)
   helpers << "- ActiveAdmin: `login_as(admin_user, scope: :admin_user)`." if installed[:admin]
   helpers << "- API: `headers: auth_headers_for(user)` signs in through `/api/v1/users/sign_in` and returns the Authorization header." if auth == :devise_jwt
+  helpers << "- Rails 8 authentication: `sign_in_as(user)` / `sign_out` in request specs (`spec/support/authentication.rb`)." if auth == :native && File.exist?("spec/support/authentication.rb")
   rules["testing.md"] = <<~MARKDOWN
     ---
     paths:
@@ -480,6 +481,11 @@ todo = [ "- [ ] Fill in \"What this app does\" in `CLAUDE.md`." ]
 todo << "- [ ] Set the production mailer host in `config/environments/production.rb` (`TODO_PUT_YOUR_DOMAIN_HERE`)." if read_file.call("config/environments/production.rb").include?("TODO_PUT_YOUR_DOMAIN_HERE")
 todo << "- [ ] Set `CLOUDINARY_URL=cloudinary://KEY:SECRET@CLOUD_NAME` in `.env` and in production." if installed[:cloudinary]
 todo << "- [ ] Set `OPENAI_API_KEY` (or another provider's key) in `.env` and in production." if installed[:ruby_llm]
+# Active Storage variants use libvips; without it every boot logs "Using vips to process variants
+# requires the libvips library". This checks the machine running the template.
+if has_gem.call("image_processing") && !system("vips --version > /dev/null 2>&1")
+  todo << "- [ ] Install libvips for Active Storage image variants (`brew install vips` on macOS; Heroku's stack includes it), or set `config.active_storage.variant_processor = :disabled` if you never transform images through Active Storage (e.g. Cloudinary does it by URL)."
+end
 todo << "- [ ] Create a real production admin (`AdminUser.create!(…)` in a production console); the seed account is development-only." if installed[:admin]
 todo << "- [ ] Set `DEVISE_JWT_SECRET_KEY` in production (`bin/rails secret` makes one); without it tokens are signed with `secret_key_base`." if auth == :devise_jwt
 todo << "- [ ] Set `ALLOWED_ORIGINS` (comma-separated) to your web clients' origins in production." if api_only

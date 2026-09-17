@@ -27,6 +27,23 @@ def source_path(file)
   end
 end
 
+# Apply a shared module. Modules stop with `exit` when their guard finds them already installed,
+# which is right standalone (`rails app:template`), but inside `rails new` that `exit` would end
+# the whole generation: every later module, the migrations and the final commits skipped, with
+# the shell reporting success. A clean exit (status 0) now skips only that module; a failing one
+# (`exit 1`, `abort`) still stops the run. A skipped module leaves nothing to commit, and an empty
+# `git commit` would abort `rails new` too, so every commit after a module is guarded.
+def apply_shared(file)
+  padding = shell.padding
+  apply source_path(file)
+rescue SystemExit => e
+  raise unless e.success?
+
+  # Thor's `apply` only restores its output indent when the module runs to the end.
+  shell.padding = padding
+  say "#{file} exited early (its guard skipped it); continuing with the next step.", :yellow
+end
+
 # Ruby version pin
 inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
@@ -163,6 +180,24 @@ if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
         gem "activeadmin"
 
       RUBY
+    end
+
+    # ActiveAdmin writes app/assets/stylesheets/active_admin.scss, and the Sprockets manifest links
+    # every stylesheet, so without a Sass compiler every page 500s (`LoadError: sassc`). The
+    # Bootstrap choice already adds sassc-rails.
+    unless File.read("Gemfile").match?(/^\s*gem ["']sassc-rails["']/)
+      inject_into_file "Gemfile", before: "group :development, :test do" do
+        <<~RUBY
+          gem "sassc-rails"
+
+        RUBY
+      end
+
+      # sassc-rails also makes SassC the CSS minifier, and SassC can't parse Tailwind 4's output
+      # (`rgb(from red r g b)`): the test build and `assets:precompile` fail. Skip minification.
+      if File.read("Gemfile").match?(/^\s*gem ["']tailwindcss-rails["']/)
+        environment "config.assets.css_compressor = nil"
+      end
     end
   end
 end
@@ -354,121 +389,121 @@ after_bundle do
 
   # shared/bootstrap.rb
   if gemfile.include?('gem "bootstrap"')
-    apply source_path("shared/bootstrap.rb")
+    apply_shared("shared/bootstrap.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install bootstrap.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install bootstrap.'"
   end
 
   # shared/tailwind.rb
   if gemfile.include?('gem "tailwindcss-rails"')
-    apply source_path("shared/tailwind.rb")
+    apply_shared("shared/tailwind.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install tailwind.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install tailwind.'"
   end
 
   # shared/devise.rb
   if gemfile.include?("gem \"devise\"")
     # Gem was added → run shared/devise.rb shared template setup.
-    apply source_path("shared/devise.rb")
+    apply_shared("shared/devise.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install devise.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install devise.'"
   end
 
    # shared/admin.rb (Devise required before installation)
   if gemfile.include?('gem "activeadmin"')
-    apply source_path("shared/admin.rb")
+    apply_shared("shared/admin.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install active admin.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install active admin.'"
   end
 
   # shared/dev_tools.rb
   if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotaterb"')
-    apply source_path("shared/dev_tools.rb")
+    apply_shared("shared/dev_tools.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install dev_tools template gems (annotaterb, better errors, pry, awesome print, rubocop).'"
+    run "git diff --cached --quiet || git commit -m 'feat: install dev_tools template gems (annotaterb, better errors, pry, awesome print, rubocop).'"
   end
 
   # shared/friendly_urls.rb
   if gemfile.include?('gem "friendly_id"')
-    apply source_path("shared/friendly_urls.rb")
+    apply_shared("shared/friendly_urls.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install friendly id.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install friendly id.'"
   end
 
   # shared/testing.rb
   if gemfile.include?('gem "rspec-rails"')
-    apply source_path("shared/testing.rb")
+    apply_shared("shared/testing.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install testing.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install testing.'"
   end
 
   # shared/image_upload_cloudinary.rb
   if gemfile.include?('gem "cloudinary"')
-    apply source_path("shared/image_upload_cloudinary.rb")
+    apply_shared("shared/image_upload_cloudinary.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install active storage and cloudinary.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install active storage and cloudinary.'"
   end
 
   # shared/navbar.rb
   if File.exist?("app/views/shared/_navbar.html.erb")
-    apply source_path("shared/navbar.rb")
+    apply_shared("shared/navbar.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: add navbar.'"
+    run "git diff --cached --quiet || git commit -m 'feat: add navbar.'"
   end
 
   # shared/pagination.rb
   if gemfile.include?('gem "pagy"')
-    apply source_path("shared/pagination.rb")
+    apply_shared("shared/pagination.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install pagy pagination.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install pagy pagination.'"
   end
 
   # shared/ruby_llm.rb
   if gemfile.include?("gem \"ruby_llm\"")
     # Gem was added → run shared/ruby_llm.rb shared template setup.
-    apply source_path("shared/ruby_llm.rb")
+    apply_shared("shared/ruby_llm.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install ruby_llm.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install ruby_llm.'"
   end
 
   # shared/security.rb
   if gemfile.include?('gem "secure_headers"')
-    apply source_path("shared/security.rb")
+    apply_shared("shared/security.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'feat: install security.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install security.'"
   end
 
   # shared/claude_code.rb: last module, so it can see everything installed above.
   if install_claude_code
-    apply source_path("shared/claude_code.rb")
+    apply_shared("shared/claude_code.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'chore: add Claude Code project setup'"
+    run "git diff --cached --quiet || git commit -m 'chore: add Claude Code project setup'"
   end
 
   # Run all migrations towards the end of `after_bundle`.
@@ -492,9 +527,9 @@ after_bundle do
 
   # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
   # Last on purpose: every commit above is made before the hook exists.
-  apply source_path("shared/conventional_commits.rb")
+  apply_shared("shared/conventional_commits.rb")
   git add: "."
-  git commit: "-m 'chore: enforce conventional commits with a commit-msg hook'"
+  run "git diff --cached --quiet || git commit -m 'chore: enforce conventional commits with a commit-msg hook'"
 
   say "✅ Rails 7 Custom template installation complete! 🚀🔥", :green
 end

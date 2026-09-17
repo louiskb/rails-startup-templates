@@ -86,7 +86,7 @@ rails _7.1.6_ new my_app \
 
 ### Tailwind Template Specifics
 - Tailwind CSS 4 via `tailwindcss-rails` (styles in `app/assets/tailwind/application.css`, no `tailwind.config.js`)
-- Simple Form with a Tailwind wrapper
+- Simple Form with Tailwind 4 wrappers (text inputs, inline checkboxes, a styled submit button)
 - Layout shell with Tailwind classes
 
 ### API Template Specifics (Rails 8)
@@ -572,6 +572,13 @@ Or skip the default navbar entirely and build your own from scratch.
 json 3.0 (September 2026) is incompatible with Rails 8.1.3.1 and 7.1.6. The templates pin
 `gem "json", "< 3"`. In an app generated before the pin, add that line to the Gemfile and run
 `bundle install`.
+
+### Image uploads fail with `LoadError: Could not open library 'vips'`
+Active Storage variants (resizing, thumbnails) use libvips through the `image_processing` gem.
+Install it with `brew install vips` on macOS (Heroku's stack already includes it). If Cloudinary
+transforms your images by URL and you never call `.variant`, set
+`config.active_storage.variant_processor = :disabled` instead. With `CLAUDE_CODE=true`, the
+generated `TODO.md` flags this when libvips is missing on the machine that ran the template.
 
 ### Bundler errors
 ```bash

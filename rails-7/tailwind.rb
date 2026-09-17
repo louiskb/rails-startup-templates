@@ -32,6 +32,23 @@ def source_path(file)
   end
 end
 
+# Apply a shared module. Modules stop with `exit` when their guard finds them already installed,
+# which is right standalone (`rails app:template`), but inside `rails new` that `exit` would end
+# the whole generation: every later module, the migrations and the final commits skipped, with
+# the shell reporting success. A clean exit (status 0) now skips only that module; a failing one
+# (`exit 1`, `abort`) still stops the run. A skipped module leaves nothing to commit, and an empty
+# `git commit` would abort `rails new` too, so every commit after a module is guarded.
+def apply_shared(file)
+  padding = shell.padding
+  apply source_path(file)
+rescue SystemExit => e
+  raise unless e.success?
+
+  # Thor's `apply` only restores its output indent when the module runs to the end.
+  shell.padding = padding
+  say "#{file} exited early (its guard skipped it); continuing with the next step.", :yellow
+end
+
 # Ruby version pin — uses the current local Ruby version; silences Heroku's "no Ruby version declared" warning.
 inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
@@ -89,7 +106,7 @@ inject_into_file "app/views/layouts/application.html.erb", after: "<body>\n" do
 end
 
 # Layout shell: <main> container, footer, Google Fonts <link> tags (shared/layout.rb)
-apply source_path("shared/layout.rb")
+apply_shared("shared/layout.rb")
 
 # README
 markdown_readme_content = <<~MARKDOWN
@@ -130,6 +147,24 @@ if File.read("Gemfile").match?(/^\s*gem ["']devise["']/)
         gem "activeadmin"
 
       RUBY
+    end
+
+    # ActiveAdmin writes app/assets/stylesheets/active_admin.scss, and the Sprockets manifest links
+    # every stylesheet, so without a Sass compiler every page 500s (`LoadError: sassc`). The
+    # Bootstrap choice already adds sassc-rails.
+    unless File.read("Gemfile").match?(/^\s*gem ["']sassc-rails["']/)
+      inject_into_file "Gemfile", before: "group :development, :test do" do
+        <<~RUBY
+          gem "sassc-rails"
+
+        RUBY
+      end
+
+      # sassc-rails also makes SassC the CSS minifier, and SassC can't parse Tailwind 4's output
+      # (`rgb(from red r g b)`): the test build and `assets:precompile` fail. Skip minification.
+      if File.read("Gemfile").match?(/^\s*gem ["']tailwindcss-rails["']/)
+        environment "config.assets.css_compressor = nil"
+      end
     end
   end
 end
@@ -241,7 +276,7 @@ after_bundle do
   file "config/initializers/simple_form_tailwind.rb", <<~RUBY
     # Use this setup block to configure all options available in SimpleForm.
     SimpleForm.setup do |config|
-      # Tailwind CSS configuration
+      # Tailwind CSS 4 classes (v4 renamed shadow-sm/ring and dropped ring-opacity-*; its reset removes input borders)
       config.wrappers :tailwind, class: "mb-4" do |b|
         b.use :html5
         b.use :placeholder
@@ -251,12 +286,28 @@ after_bundle do
         b.optional :min_max
         b.optional :readonly
         b.use :label, class: "block text-sm font-medium text-gray-700 mb-1"
-        b.use :input, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50", error_class: "border-red-500"
+        b.use :input, class: "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-xs focus:border-indigo-300 focus:ring-3 focus:ring-indigo-200/50 focus:outline-hidden", error_class: "border-red-500"
+        b.use :error, wrap_with: { tag: "p", class: "mt-2 text-sm text-red-600" }
+        b.use :hint, wrap_with: { tag: "p", class: "mt-2 text-sm text-gray-500" }
+      end
+
+      # Checkboxes: a small box beside its label, not the full-width text-input styling above.
+      config.wrappers :tailwind_boolean, class: "mb-4" do |b|
+        b.use :html5
+        b.optional :readonly
+        b.wrapper tag: "div", class: "flex items-center gap-2" do |ba|
+          ba.use :input, class: "size-4 rounded border-gray-300 accent-indigo-600"
+          ba.use :label, class: "text-sm text-gray-700"
+        end
         b.use :error, wrap_with: { tag: "p", class: "mt-2 text-sm text-red-600" }
         b.use :hint, wrap_with: { tag: "p", class: "mt-2 text-sm text-gray-500" }
       end
 
       config.default_wrapper = :tailwind
+      config.wrapper_mappings = { boolean: :tailwind_boolean }
+      # Loaded after simple_form.rb (alphabetical), so these override its :nested and "btn" defaults.
+      config.boolean_style = :inline
+      config.button_class = "rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
     end
   RUBY
 
@@ -333,83 +384,83 @@ after_bundle do
 
   # shared/devise.rb
   if gemfile.include?("gem \"devise\"")
-    apply source_path("shared/devise.rb")
+    apply_shared("shared/devise.rb")
 
     git add: "."
-    git commit: "-m 'feat: install devise.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install devise.'"
   end
 
   # shared/admin.rb (Devise required before installation)
   if gemfile.include?('gem "activeadmin"')
-    apply source_path("shared/admin.rb")
+    apply_shared("shared/admin.rb")
 
     git add: "."
-    git commit: "-m 'feat: install active admin.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install active admin.'"
   end
 
   # shared/dev_tools.rb
   if gemfile.include?('gem "better_errors"') || gemfile.include?('gem "annotaterb"')
-    apply source_path("shared/dev_tools.rb")
+    apply_shared("shared/dev_tools.rb")
 
     git add: "."
-    git commit: "-m 'feat: install dev_tools template gems (annotaterb, better errors, pry, awesome print, rubocop).'"
+    run "git diff --cached --quiet || git commit -m 'feat: install dev_tools template gems (annotaterb, better errors, pry, awesome print, rubocop).'"
   end
 
   # shared/friendly_urls.rb
   if gemfile.include?('gem "friendly_id"')
-    apply source_path("shared/friendly_urls.rb")
+    apply_shared("shared/friendly_urls.rb")
 
     git add: "."
-    git commit: "-m 'feat: install friendly id.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install friendly id.'"
   end
 
   # shared/testing.rb
   if gemfile.include?('gem "rspec-rails"')
-    apply source_path("shared/testing.rb")
+    apply_shared("shared/testing.rb")
 
     git add: "."
-    git commit: "-m 'feat: install testing.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install testing.'"
   end
 
   # shared/image_upload_cloudinary.rb
   if gemfile.include?('gem "cloudinary"')
-    apply source_path("shared/image_upload_cloudinary.rb")
+    apply_shared("shared/image_upload_cloudinary.rb")
 
     git add: "."
-    git commit: "-m 'feat: install active storage and cloudinary.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install active storage and cloudinary.'"
   end
 
   # shared/pagination.rb
   if gemfile.include?('gem "pagy"')
-    apply source_path("shared/pagination.rb")
+    apply_shared("shared/pagination.rb")
 
     git add: "."
-    git commit: "-m 'feat: install pagy pagination.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install pagy pagination.'"
   end
 
   # shared/ruby_llm.rb
   if gemfile.include?("gem \"ruby_llm\"")
-    apply source_path("shared/ruby_llm.rb")
+    apply_shared("shared/ruby_llm.rb")
 
     git add: "."
-    git commit: "-m 'feat: install ruby_llm.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install ruby_llm.'"
   end
 
   # shared/security.rb
   if gemfile.include?('gem "secure_headers"')
-    apply source_path("shared/security.rb")
+    apply_shared("shared/security.rb")
 
     git add: "."
-    git commit: "-m 'feat: install security.'"
+    run "git diff --cached --quiet || git commit -m 'feat: install security.'"
   end
 
   # shared/claude_code.rb: last module, so it can see everything installed above.
   if install_claude_code
-    apply source_path("shared/claude_code.rb")
+    apply_shared("shared/claude_code.rb")
 
     # Git
     git add: "."
-    git commit: "-m 'chore: add Claude Code project setup'"
+    run "git diff --cached --quiet || git commit -m 'chore: add Claude Code project setup'"
   end
 
   # Run all migrations towards the end of `after_bundle`
@@ -433,9 +484,9 @@ after_bundle do
 
   # Conventional commits: commit-msg hook + README section (shared/conventional_commits.rb).
   # Last on purpose: every commit above is made before the hook exists.
-  apply source_path("shared/conventional_commits.rb")
+  apply_shared("shared/conventional_commits.rb")
   git add: "."
-  git commit: "-m 'chore: enforce conventional commits with a commit-msg hook'"
+  run "git diff --cached --quiet || git commit -m 'chore: enforce conventional commits with a commit-msg hook'"
 
   say "✅ Rails 7 Tailwind template installation complete! 🚀🔥", :green
 end
