@@ -66,11 +66,24 @@ else
   generate("devise", "User")
 end
 
-# ApplicationController: Add optional global auth
-inject_into_file "app/controllers/application_controller.rb", after: "class ApplicationController < ActionController::Base\n" do
-  <<~RUBY
-    before_action :authenticate_user!
-  RUBY
+# ApplicationController: require sign-in everywhere (pages opt out below).
+app_controller = "app/controllers/application_controller.rb"
+unless File.read(app_controller).match?(/^\s*before_action :authenticate_user!/)
+  inject_into_file app_controller, after: "class ApplicationController < ActionController::Base\n" do
+    <<~RUBY
+      before_action :authenticate_user!
+    RUBY
+  end
+end
+
+# PagesController#home stays public. The main templates write PagesController without
+# this line because `skip_before_action :authenticate_user!` raises ArgumentError in any
+# app where Devise hasn't defined that callback.
+pages_controller = "app/controllers/pages_controller.rb"
+if File.exist?(pages_controller) && !File.read(pages_controller).match?(/^\s*skip_before_action :authenticate_user!/)
+  inject_into_file pages_controller, after: "class PagesController < ApplicationController\n" do
+    "  skip_before_action :authenticate_user!, only: :home\n\n"
+  end
 end
 
 # Devise views

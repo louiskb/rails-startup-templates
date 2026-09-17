@@ -327,9 +327,9 @@ after_bundle do
   # Pages Controller
   run "rm app/controllers/pages_controller.rb"
   file "app/controllers/pages_controller.rb", <<~RUBY
+    # Public pages. Auth modules add their own public-access line here
+    # (Devise: skip_before_action; Rails 8 authentication: allow_unauthenticated_access).
     class PagesController < ApplicationController
-      skip_before_action :authenticate_user!, only: [ :home ]
-
       def home
       end
     end
