@@ -24,6 +24,29 @@ rails_version = Rails::VERSION::STRING
 rails8 = Rails::VERSION::MAJOR >= 8
 api_only = read_file.call("config/application.rb").include?("config.api_only = true")
 dev_database = read_file.call("config/database.yml")[/database: (\w+_development)/, 1] || "#{app_dir.tr("-", "_")}_development"
+database_adapter = read_file.call("config/database.yml")[/adapter: (\w+)/, 1]
+database_label = { "postgresql" => "PostgreSQL", "sqlite3" => "SQLite", "mysql2" => "MySQL", "trilogy" => "MySQL" }
+  .fetch(database_adapter, "the database in config/database.yml")
+
+# Standalone use means an app the templates didn't build: check versions and files rather
+# than assuming the template's defaults.
+lockfile = read_file.call("Gemfile.lock")
+gem_major = ->(name) { lockfile[/^    #{Regexp.escape(name)} \((\d+)\./, 1]&.to_i }
+pagy_major = gem_major.call("pagy")
+tailwind4 = File.exist?("app/assets/tailwind/application.css") || gem_major.call("tailwindcss-rails").to_i >= 4
+le_wagon_styles = File.exist?("app/assets/stylesheets/config/_bootstrap_variables.scss")
+layout = read_file.call("app/views/layouts/application.html.erb")
+layout_shell = layout.include?("<main")
+google_font_links = layout.include?("fonts.googleapis.com")
+pagy_headers = read_file.call("app/controllers/api/v1/base_controller.rb").include?("headers_hash")
+# Match the code line: Rails 8.1 development.rb has the COMMENT "Change to :null_store to avoid any caching."
+dev_null_cache = read_file.call("config/environments/development.rb").match?(/^\s*config\.cache_store = :null_store/)
+setup_command = read_file.call("bin/setup").include?("--skip-server") ? "bin/setup --skip-server" : "bin/setup"
+# The commit-msg hook exists already (standalone) or is about to (main templates apply
+# shared/conventional_commits.rb right after this module).
+main_templates = [ "bootstrap.rb", "custom.rb", "tailwind.rb", "api.rb" ]
+in_main_template = caller_locations.any? { |loc| loc.label == "after_bundle" || loc.path =~ Regexp.union(main_templates) }
+commit_hook = File.exist?(".githooks/commit-msg") || in_main_template
 
 css = if has_gem.call("bootstrap")
   :bootstrap
@@ -66,7 +89,7 @@ rules = {}
 rules["rails.md"] = <<~MARKDOWN
   # Rails
 
-  - Rails #{rails_version} with PostgreSQL#{api_only ? ", API only (no views, sessions or cookies)" : ""}.
+  - Rails #{rails_version} with #{database_label}#{api_only ? ", API only (no views, sessions or cookies)" : ""}.
   - Strong parameters: #{rails8 ? "`params.expect(post: [ :title, :body ])`" : "`params.require(:post).permit(:title, :body)`"}.
   - Secrets come from ENV: `ENV.fetch("NAME", nil)`, or `ENV.fetch("NAME")` when the app can't run without it. Local values live in `.env` (gitignored); never hardcode a key or commit `.env`, `config/master.key`, or a key inside `.mcp.json`.
   - Rules that must always hold get a database constraint as well as a validation (`null: false`, a unique index): validations alone race under concurrent requests.
@@ -157,12 +180,12 @@ if api_only
 
     # JSON API
 
-    - Endpoints live under `/api/v1` (`namespace :api, defaults: { format: :json }`) and inherit `Api::V1::BaseController`.
+    - Endpoints live under `/api/v1` (`namespace :api, defaults: { format: :json }, constraints: { format: "json" }`: non-JSON suffixes 404, which the throttles and JWT paths rely on) and inherit `Api::V1::BaseController`.
     - Errors always render `{ error:, code:, details: }` through `render_error`; clients branch on `code`. Handle a new exception type with `rescue_from` in `BaseController`, not ad-hoc JSON.
     - Serialize with Blueprinter (`app/blueprints/`): `render json: { post: PostBlueprint.render_as_hash(post) }`. Never `render json: record`: it leaks every column.
     #{auth_lines}
     - CORS (`config/initializers/cors.rb`): browser origins come from `ALLOWED_ORIGINS`; `Authorization` and the pagination headers are exposed.
-    #{installed[:pagination] ? "- Pagination: `@pagy, posts = pagy(:offset, Post.order(:id))`; `BaseController` copies the Pagy headers onto the response." : ""}
+    #{installed[:pagination] && pagy_headers ? "- Pagination: `@pagy, posts = pagy(:offset, Post.order(:id))`; `BaseController` copies the Pagy headers onto the response." : ""}
   MARKDOWN
 end
 
@@ -182,6 +205,24 @@ if installed[:admin]
 end
 
 if installed[:pagination]
+  pagy_lines = if pagy_major.nil? || pagy_major >= 43
+    [
+      "# Pagination (Pagy 43)",
+      "",
+      "- `include Pagy::Method` in the controller (or ApplicationController), then `@pagy, @posts = pagy(:offset, Post.order(:id), limit: 12)`.",
+      api_only ? (pagy_headers ? "- JSON: `BaseController` merges `@pagy.headers_hash` into the response headers." : "- JSON: `response.headers.merge!(@pagy.headers_hash)`.") : "- Views: `<%== @pagy.series_nav#{css == :bootstrap ? "(:bootstrap)" : ""} %>` (note `<%==`).",
+      "- Pagy 43 removed `Pagy::Backend`, `Pagy::Frontend` and `pagy_bootstrap_nav`: older tutorials don't apply.",
+      "- Global options: `config/initializers/pagy.rb` (`Pagy::OPTIONS`)."
+    ]
+  else
+    [
+      "# Pagination (Pagy #{pagy_major})",
+      "",
+      "- This app runs Pagy #{pagy_major}, which predates Pagy 43: `include Pagy::Backend` in controllers, `include Pagy::Frontend` in helpers, `@pagy, @posts = pagy(Post.order(:id))`, nav helpers from its extras (e.g. `pagy_bootstrap_nav(@pagy)`).",
+      "- Pagy 43 replaced all of these (`Pagy::Method`, `pagy(:offset, …)`, `@pagy.series_nav`): don't mix the two APIs; upgrade with Pagy's upgrade guide.",
+      "- Global options: `config/initializers/pagy.rb`."
+    ]
+  end
   rules["pagination.md"] = <<~MARKDOWN
     ---
     paths:
@@ -189,12 +230,7 @@ if installed[:pagination]
       - "app/views/**/*"
     ---
 
-    # Pagination (Pagy 43)
-
-    - `include Pagy::Method` in the controller (or ApplicationController), then `@pagy, @posts = pagy(:offset, Post.order(:id), limit: 12)`.
-    #{api_only ? "- JSON: `BaseController` merges `@pagy.headers_hash` into the response headers." : "- Views: `<%== @pagy.series_nav#{css == :bootstrap ? "(:bootstrap)" : ""} %>` (note `<%==`)."}
-    - Pagy 43 removed `Pagy::Backend`, `Pagy::Frontend` and `pagy_bootstrap_nav`: older tutorials don't apply.
-    - Global options: `config/initializers/pagy.rb` (`Pagy::OPTIONS`).
+    #{pagy_lines.join("\n")}
   MARKDOWN
 end
 
@@ -265,12 +301,18 @@ if installed[:security]
 
     #{csp_line}- secure_headers (`config/initializers/secure_headers.rb`) sets HSTS, frame, content-type and referrer headers#{api_only ? "" : "; its CSP is opted out on purpose (Rails owns CSP)"}.
     - Rack::Attack (`config/initializers/rack_attack.rb`) throttles by path. Change a sign-in or sign-up route and the throttle silently stops applying until its path is updated too.
-    - Rack::Attack counts in `Rails.cache`: nothing is throttled in development unless `bin/rails dev:cache` is on.
+    #{dev_null_cache ? "- Rack::Attack counts in `Rails.cache`: nothing is throttled in development unless `bin/rails dev:cache` is on." : "- Rack::Attack counts in `Rails.cache`. Development uses an in-memory store, so throttles apply locally (per server process) and reset on restart."}
   MARKDOWN
 end
 
 case css
 when :bootstrap
+  bootstrap_lines = []
+  bootstrap_lines << "- The layout supplies `<main class=\"container …\">`, the flashes and the footer. Views start with their content: no top-level `.container`, no flash rendering." if layout_shell
+  bootstrap_lines << "- Stylesheets follow Le Wagon's structure: variables in `config/_bootstrap_variables.scss` (read before `@import \"bootstrap\"`), reusable pieces in `components/`, page styles in `pages/`. Add each new partial to its folder's `_index.scss`." if le_wagon_styles
+  bootstrap_lines << "- Fonts load from `<link>` tags in the layout; `config/_fonts.scss` only names the font families." if le_wagon_styles && google_font_links
+  bootstrap_lines << "- Dark mode: `data-bs-theme` plus theme-aware utilities (`text-body-secondary`, `bg-body-tertiary`), not `.text-dark`, `.navbar-light` or a hardcoded `white`."
+  bootstrap_lines << "- Forms: `simple_form_for` with `f.input` and `f.button :submit` (Bootstrap wrappers are configured)." if simple_form
   rules["bootstrap.md"] = <<~MARKDOWN
     ---
     paths:
@@ -278,28 +320,31 @@ when :bootstrap
       - "app/assets/stylesheets/**/*"
     ---
 
-    # Bootstrap 5.3
+    # Bootstrap 5
 
-    - The layout supplies `<main class="container …">`, the flashes and the footer. Views start with their content: no top-level `.container`, no flash rendering.
-    - Stylesheets follow Le Wagon's structure: variables in `config/_bootstrap_variables.scss` (read before `@import "bootstrap"`), reusable pieces in `components/`, page styles in `pages/`. Add each new partial to its folder's `_index.scss`.
-    - Fonts load from `<link>` tags in the layout; `config/_fonts.scss` only names the font families.
-    - Dark mode: `data-bs-theme` plus theme-aware utilities (`text-body-secondary`, `bg-body-tertiary`), not `.text-dark`, `.navbar-light` or a hardcoded `white`.
-    #{simple_form ? "- Forms: `simple_form_for` with `f.input` and `f.button :submit` (Bootstrap wrappers are configured)." : ""}
+    #{bootstrap_lines.join("\n")}
   MARKDOWN
 when :tailwind
+  tailwind_lines = []
+  tailwind_lines << "- The layout supplies `<main class=\"container mx-auto …\">`, the flashes and the footer. Views start with their content." if layout_shell
+  tailwind_lines << if tailwind4
+    "- Styles live in `app/assets/tailwind/application.css` (`@import \"tailwindcss\";`, customise with `@theme`). Tailwind 4 has no `tailwind.config.js`."
+  else
+    "- Styles live in `app/assets/stylesheets/application.tailwind.css`; content paths and theme are in `config/tailwind.config.js`."
+  end
+  tailwind_lines << "- Run the app with `bin/dev` so `tailwindcss:watch` rebuilds. A class only exists if it appears whole in a source file: never build class names from strings."
+  tailwind_lines << "- Forms: `simple_form_for` with the `:tailwind` wrapper (`config/initializers/simple_form_tailwind.rb`)." if simple_form && File.exist?("config/initializers/simple_form_tailwind.rb")
   rules["tailwind.md"] = <<~MARKDOWN
     ---
     paths:
       - "app/views/**/*"
       - "app/assets/tailwind/**/*"
+      - "app/assets/stylesheets/**/*"
     ---
 
-    # Tailwind CSS 4
+    # Tailwind CSS#{tailwind4 ? " 4" : ""}
 
-    - The layout supplies `<main class="container mx-auto …">`, the flashes and the footer. Views start with their content.
-    - Styles live in `app/assets/tailwind/application.css` (`@import "tailwindcss";`, customise with `@theme`). Tailwind 4 has no `tailwind.config.js`.
-    - Run the app with `bin/dev` so `tailwindcss:watch` rebuilds. A class only exists if it appears whole in a source file: never build class names from strings.
-    #{simple_form ? "- Forms: `simple_form_for` with the `:tailwind` wrapper (`config/initializers/simple_form_tailwind.rb`)." : ""}
+    #{tailwind_lines.join("\n")}
   MARKDOWN
 end
 
@@ -316,7 +361,11 @@ end
 
 # ---------------------------------------------------------------------------
 # .claude/settings.json: allow everyday safe commands, deny secrets and data loss.
-# Nothing that publishes, reads production secrets or runs arbitrary SQL/Ruby.
+# Nothing that publishes, reads production secrets, runs arbitrary SQL/Ruby or writes files.
+# Not allowed on purpose: `bin/rails generate` (a remove_column migration + the allowed
+# db:migrate would drop data with no prompt; --force overwrites files) and git subcommands
+# (Claude Code already auto-approves read-only git; an explicit `git diff *` rule would also
+# approve `git diff --output=<file>`, which writes files).
 # ---------------------------------------------------------------------------
 bash = ->(command) { [ "Bash(#{command})", "Bash(#{command} *)" ] }
 allow = []
@@ -326,9 +375,7 @@ allow += bash.call(lint_command) if lint_command
 allow += bash.call("bin/brakeman") if File.exist?("bin/brakeman")
 allow << "Bash(bin/rails db:migrate)"
 allow << "Bash(bin/rails db:migrate:status)"
-allow += bash.call("bin/rails generate")
 allow += bash.call("bundle exec annotaterb") if installed[:annotaterb]
-%w[status diff log show].each { |git_command| allow += bash.call("git #{git_command}") }
 
 deny = [
   "Read(./.env)",
@@ -360,9 +407,9 @@ auth_label = {
   devise_jwt: "Devise + devise-jwt (JWT in the Authorization header)",
   native: "Rails 8 authentication generator"
 }[auth]
-css_label = { bootstrap: "Bootstrap 5.3 (Sprockets + Le Wagon stylesheets)", tailwind: "Tailwind CSS 4 (tailwindcss-rails)" }[css]
+css_label = { bootstrap: le_wagon_styles ? "Bootstrap 5 (Sprockets + Le Wagon stylesheets)" : "Bootstrap 5", tailwind: tailwind4 ? "Tailwind CSS 4 (tailwindcss-rails)" : "Tailwind CSS (tailwindcss-rails)" }[css]
 
-stack_rows = [ "| Framework | Rails #{rails_version}#{api_only ? " (API only)" : ""} |", "| Database | PostgreSQL |" ]
+stack_rows = [ "| Framework | Rails #{rails_version}#{api_only ? " (API only)" : ""} |", "| Database | #{database_label} |" ]
 stack_rows << "| CSS | #{css_label} |" if css_label
 stack_rows << "| Auth | #{auth_label} |" if auth_label
 stack_rows << "| Tests | #{rspec ? "RSpec, FactoryBot, Faker, Shoulda Matchers" : "Minitest"} |"
@@ -373,11 +420,11 @@ conventions = [
   "- ENV via `ENV.fetch(\"NAME\", nil)`; secrets in `.env` (gitignored), never in code."
 ]
 conventions << "- Forms: `simple_form_for` with `f.input` / `f.button :submit`, never `form_with`." if simple_form && !api_only
-conventions << "- The layout supplies the page container: views never add their own top-level container." if read_file.call("app/views/layouts/application.html.erb").include?("<main")
-conventions << "- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) (`feat(posts): add comments`); `.githooks/commit-msg` rejects anything else once `bin/setup` has run."
+conventions << "- The layout supplies the page container: views never add their own top-level container." if layout_shell
+conventions << "- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) (`feat(posts): add comments`); `.githooks/commit-msg` rejects anything else once `bin/setup` has run." if commit_hook
 
 commands = [
-  "bin/setup                # install gems, prepare the database, enable the commit-msg hook",
+  "#{setup_command.ljust(24)} # install gems, prepare the database#{commit_hook ? ", enable the commit-msg hook" : ""}",
   "#{server_command.ljust(24)} # run the app on http://localhost:3000",
   "#{test_command.ljust(24)} # run the tests"
 ]
@@ -438,10 +485,10 @@ todo << "- [ ] Set `DEVISE_JWT_SECRET_KEY` in production (`bin/rails secret` mak
 todo << "- [ ] Set `ALLOWED_ORIGINS` (comma-separated) to your web clients' origins in production." if api_only
 
 mcp_rows = [
-  "| PostgreSQL ([DBHub](https://github.com/bytebase/dbhub)) | Query the development database and inspect the schema | `claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn \"postgresql://localhost:5432/#{dev_database}\"` |",
   "| [Rails MCP Server](https://github.com/maquina-app/rails-mcp-server) | Read-only introspection of routes, models and schema (2.0 removed code execution) | `gem install rails-mcp-server`, register the project with `rails-mcp-config`, then `claude mcp add rails -- rails-mcp-server` (⚠️ no vendor-documented Claude Code command; check the README) |",
   "| [Heroku](https://devcenter.heroku.com/articles/heroku-remote-mcp-server) | Deploys, logs, config vars, Heroku Postgres | `claude mcp add --transport http heroku https://mcp.heroku.com/mcp` (OAuth) |"
 ]
+mcp_rows.unshift("| PostgreSQL ([DBHub](https://github.com/bytebase/dbhub)) | Query the development database and inspect the schema | `claude mcp add --transport stdio db -- npx -y @bytebase/dbhub --dsn \"postgresql://localhost:5432/#{dev_database}?sslmode=disable\"` |") if database_adapter == "postgresql"
 mcp_rows << "| [Cloudinary](https://cloudinary.com/documentation/cloudinary_llm_mcp) | Browse and manage uploaded assets | `claude mcp add --transport http cloudinary-asset-mgmt https://asset-management.mcp.cloudinary.com/mcp` (OAuth) |" if installed[:cloudinary]
 mcp_rows << "| [Sentry](https://mcp.sentry.dev) (optional) | Errors and traces, once Sentry is set up | `claude mcp add --transport http sentry https://mcp.sentry.dev/mcp` (OAuth) |"
 
