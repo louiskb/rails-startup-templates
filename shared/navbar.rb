@@ -62,11 +62,12 @@ else
   say "Custom navbar partial found, leaving it unchanged.", :yellow
 end
 
-# Le Wagon's components/_navbar.scss hardcodes a white background, which ignores
-# Bootstrap's data-bs-theme dark mode.
+# Le Wagon's components/_navbar.scss hardcodes a white background, which stays white under
+# Bootstrap's data-bs-theme="dark". Keep white in light mode; follow the theme in dark mode.
 navbar_scss = "app/assets/stylesheets/components/_navbar.scss"
-if File.exist?(navbar_scss)
-  gsub_file navbar_scss, "background: white;", "background: var(--bs-body-bg); // follows data-bs-theme"
+if File.exist?(navbar_scss) && !File.read(navbar_scss).include?("data-bs-theme")
+  gsub_file navbar_scss, "  background: white;\n",
+    "  background: white;\n\n  [data-bs-theme=\"dark\"] & {\n    background: var(--bs-body-bg);\n  }\n"
 end
 
 # Render it in the layout: replace shared/layout.rb's marker line, or inject after <body>.
