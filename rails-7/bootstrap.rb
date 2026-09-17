@@ -381,7 +381,7 @@ after_bundle do
   run "touch '.env'"
 
   # Rubocop
-  run "curl -L https://raw.githubusercontent.com/lewagon/rails-templates/master/.rubocop.yml > rubocop.yml"
+  run "curl -L https://raw.githubusercontent.com/lewagon/rails-templates/master/.rubocop.yml > .rubocop.yml"
 
   # Initialize Git and make first commit.
   git :init
