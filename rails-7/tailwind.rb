@@ -37,6 +37,17 @@ inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
 end
 
+# json < 3: json 3.0 (2026-09-07) rejects the `quirks_mode:` option Rails 7.1 passes to
+# JSON.generate, so writing the session cookie raises ArgumentError and every page 500s.
+# Rails 7.1 is end-of-life and won't get the fix (rails/rails#58601, for 8.x): keep this pin.
+inject_into_file "Gemfile", before: "group :development, :test do" do
+  <<~RUBY
+    # Rails 7.1 is incompatible with json 3 (rails/rails#58601 is 8.x only)
+    gem "json", "< 3"
+
+  RUBY
+end
+
 # Gemfile
 inject_into_file "Gemfile", before: "group :development, :test do" do
   <<~RUBY
