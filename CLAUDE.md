@@ -48,7 +48,7 @@ A Step 2 answer with no gem to detect later (e.g. `CLAUDE_CODE`) is kept in a lo
 Every shared module checks if it's already installed before proceeding (e.g., checks for `config/initializers/devise.rb`). Safe to run multiple times.
 
 - **Guards match code, not substrings.** A comment that mentions `allow_unauthenticated_access` or `render "shared/navbar"` satisfies an `include?` check and silently skips the inject (hit twice on 2026-09-17). Match the code line: `/^\s*allow_unauthenticated_access/`, `'<%= render "shared/navbar"'`.
-- **New shared modules never `exit`.** `exit` inside an `apply`'d module ends the whole `rails new` run. Guard with `if/else` (older modules still use `exit`).
+- **New shared modules never `exit`.** `exit` inside an `apply`'d module ends the whole `rails new` run. Guard with `if/else` (older modules still use `exit`). Main templates call modules through `apply_shared("shared/x.rb")`, which rescues a clean `exit` (status 0) so only that module is skipped; `exit 1` and `abort` still stop the run. Never call `apply source_path("shared/...")` directly from a main template.
 - **Shared modules detect API apps** with `File.read("config/application.rb").include?("config.api_only = true")` and branch (no views, CSP or Better Errors; JWT instead of sessions).
 - **Main-template detection** (`caller_locations` against `["bootstrap.rb", "custom.rb", "tailwind.rb", "api.rb"]`) decides whether a module runs its own migrations. Add any new main template to every module's list.
 
@@ -95,7 +95,7 @@ bundle exec rspec spec/models/post_spec.rb # Single file
 bin/test                                   # Wrapper script (if created)
 ```
 
-The testing module installs RSpec, FactoryBot, Faker, and Shoulda Matchers with example specs that pass on a fresh app: a health request spec, a home-page system spec (non-API), a User factory, a Post example only when a Post model exists, and, in API apps with devise-jwt, a request spec for the whole sign-up/sign-in/sign-out flow.
+The testing module installs RSpec, FactoryBot, Faker, and Shoulda Matchers with example specs that pass on a fresh app: a health request spec, a home-page system spec (non-API), a User factory, a Post example only when a Post model exists, and, in API apps with devise-jwt, a request spec for the whole sign-up/sign-in/sign-out flow. With Rails 8 native authentication it adds `sign_in_as(user)` / `sign_out` for request specs (`spec/support/authentication.rb`) and a sign-in/wrong-password/sign-out request spec.
 
 ## Development Workflow
 
