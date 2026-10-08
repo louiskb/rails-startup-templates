@@ -120,7 +120,7 @@ rails new my_app -d postgresql -m TEMPLATE_URL my_app
 | **Navbar** | `NAVBAR=true/false` | Bootstrap navigation bar (Le Wagon style) with Log in / Sign up / Log out links for Devise or Rails 8 auth | Bootstrap templates only |
 | **Testing** | `TESTING=true/false` | RSpec, FactoryBot, Faker, Shoulda Matchers |
 | **Dev Tools** | `DEV_TOOLS=true/false` | Better Errors, Binding of Caller, AnnotateRb, Awesome Print |
-| **Security** | `SECURITY=true/false` | Rack Attack, Secure Headers |
+| **Security** | `SECURITY=true/false` | Rack Attack (5 sign-ins/min/IP on the app's own sign-in route: Devise `POST /users/sign_in`, native auth `POST /session`, none without auth), Secure Headers, Rails CSP |
 | **Pagination** | `PAGINATION=true/false` | Pagy gem with helper configuration |
 | **Image Upload Cloudinary** | `IMAGE_UPLOAD_CLOUDINARY=true/false` | ActiveStorage and Cloudinary configuration |
 | **Friendly URLs** | `FRIENDLY_URLS=true/false` | FriendlyId gem for slug-based ID/URLs |
@@ -490,7 +490,7 @@ Available shared modules (compatible with both Rails 7 & 8):
 2. `testing.rb` - RSpec, FactoryBot, Faker, Shoulda Matchers, with example specs that pass on a fresh app
 3. `image_upload_cloudinary.rb` - Active Storage with Cloudinary for image uploads
 4. `dev_tools.rb` - Better Errors, AnnotateRb, Pry, Awesome Print, RuboCop
-5. `security.rb` - Security headers, Content Security Policy & rate limiting
+5. `security.rb` - Security headers, Content Security Policy & rate limiting (the login throttle follows the detected auth: Devise, native auth or none)
 6. `pagination.rb` - Pagy pagination (Pagy 43)
 7. `friendly_urls.rb` - SEO-friendly URLs with FriendlyId
 8. `admin.rb` - Admin dashboard with ActiveAdmin (requires Devise)
