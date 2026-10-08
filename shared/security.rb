@@ -149,6 +149,9 @@ end
 #   Devise                 → POST /users/sign_in
 #   Rails 8 native auth    → POST /session
 #   no auth                → no login throttle
+# The Devise path assumes `devise_for :users` (what these templates generate); an app
+# with another Devise model (e.g. `devise_for :admins`) needs its own path here.
+# API apps keep their own `/api/v1/users/sign_in` throttle below and ignore this.
 login_path =
   if gemfile.match?(/^\s*gem ['"]devise['"]/) || File.exist?("config/initializers/devise.rb")
     "/users/sign_in"
@@ -216,7 +219,12 @@ unless File.exist?("config/initializers/rack_attack.rb")
     RUBY
   end
 
-  say "Rate limiting enabled (config/initializers/rack_attack.rb)#{login_path ? ", login throttle on POST #{login_path}" : ", no login throttle (no auth found)"}.", :green
+  login_note =
+    if api_only then ", login throttle on POST /api/v1/users/sign_in"
+    elsif login_path then ", login throttle on POST #{login_path}"
+    else ", no login throttle (no auth found)"
+    end
+  say "Rate limiting enabled (config/initializers/rack_attack.rb)#{login_note}.", :green
 
 else
   say "Rack::Attack initializer exists.", :yellow
