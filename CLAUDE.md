@@ -70,7 +70,7 @@ Each module creates its own git commit after installation, using conventional co
 | Background jobs | Sidekiq + Redis | Solid Queue (built-in) |
 | CSS in custom.rb | Bootstrap or Tailwind choice | Bootstrap, Tailwind, or Vanilla choice |
 | RuboCop config | Le Wagon's `.rubocop.yml` | Rails' omakase `.rubocop.yml` |
-| `gem "json", "< 3"` | Permanent (Rails 7.1 is EOL; json 3 breaks session cookies) | Until the Rails pin includes rails/rails#58601 |
+| `gem "json", "< 3"` | Permanent (Rails 7.1 is EOL; json 3 breaks session cookies) | None: Rails 8.1.4 includes rails/rails#58601 |
 | API template | — | `rails-8/api.rb` |
 
 Bootstrap templates on Rails 8 explicitly remove Propshaft and add Sprockets because Bootstrap requires SCSS preprocessing. `custom.rb` writes `app/assets/config/manifest.js` when Bootstrap is chosen, before bundling, because Sprockets won't boot without one.
