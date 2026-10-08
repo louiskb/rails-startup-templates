@@ -1,6 +1,6 @@
 # rails-8/api.rb
 # Rails 8 API-only Template (a JSON backend for a mobile app or a JavaScript frontend)
-# Run with --api:  rails _8.1.3.1_ new my_api --api -d postgresql -m rails-8/api.rb
+# Run with --api:  rails _8.1.4_ new my_api --api -d postgresql -m rails-8/api.rb
 
 # LOGIC FLOW:
 # 1. Core setup (non-interactive): CORS, Blueprinter, versioned base controller.
@@ -59,18 +59,6 @@ end
 # Ruby version pin: silences Heroku's "no Ruby version declared" warning.
 inject_into_file "Gemfile", after: "source \"https://rubygems.org\"\n" do
   "\nruby \"#{RUBY_VERSION}\"\n"
-end
-
-# json < 3: json 3.0 (2026-09-07) made JSON.parse options keyword-only, and Rails 8.1.3.1
-# still passes them positionally, so decoding JSON through ActiveSupport raises
-# ArgumentError. Fixed upstream in rails/rails#58601 (merged, unreleased as of 2026-09-17):
-# remove this pin once the Rails version in shell-functions.txt includes it.
-inject_into_file "Gemfile", before: "group :development, :test do" do
-  <<~RUBY
-    # Remove once Rails includes rails/rails#58601 (json 3.0 compatibility)
-    gem "json", "< 3"
-
-  RUBY
 end
 
 # CORS: Rails ships rack-cors commented out in API apps.

@@ -40,7 +40,7 @@ rails new my_api --api \
 ### Rails 7 with Bootstrap
 ```bash
 # Check your installed Rails versions first:
-# Run `gem list '^rails$'` to see which Rails versions are installed, e.g. `rails (8.1.3.1, 7.1.6)`
+# Run `gem list '^rails$'` to see which Rails versions are installed, e.g. `rails (8.1.4, 7.1.6)`
 # Then use your specific 7.x version
 rails _7.1.6_ new my_app \
   -d postgresql \
@@ -65,7 +65,7 @@ rails _7.1.6_ new my_app \
 - **Import Maps**: JavaScript management without a bundler
 - **RuboCop**: Rails' omakase config
 - **Authentication**: Devise or Rails 8's native authentication generator
-- **json pin**: `gem "json", "< 3"` until the Rails version in the shell functions includes rails/rails#58601 (json 3.0 breaks session cookies in Rails 8.1.3.1)
+- **json 3 ready**: Rails 8.1.4 includes rails/rails#58601, so Rails 8 apps take json 3 with no pin (Rails 8.1.3.1 and earlier needed `gem "json", "< 3"`)
 
 ### Rails 7 Templates Specifics
 - **Asset Pipeline**: Sprockets
@@ -178,7 +178,7 @@ Add these to your `~/.zshrc` or `~/.bashrc` for quick app creation:
 ```bash
 # RAILS 8 & 7 TEMPLATE SHELL FUNCTIONS (ZSH):
 # Rails 8 vs 7 template differences = (1) choice between native `authentication` setup vs `devise` in Rails 8 templates, (2) a Rails 8 API-only template (`rails8-api*`).
-# Check Rails version(s) on local machine `gem list '^rails$'` and specify in shell functions `rails <version> new...` e.g. `rails _8.1.3.1_ new...`
+# Check Rails version(s) on local machine `gem list '^rails$'` and specify in shell functions `rails <version> new...` e.g. `rails _8.1.4_ new...`
 
 # `.zshrc` BACKUP:
 # `~/.zshrc` = your terminal's "settings file". A syntax error in these functions can break every new terminal tab.
@@ -238,25 +238,25 @@ export RAILS_TEMPLATES_BASE="https://raw.githubusercontent.com/YOUR_USERNAME/rai
 
 rails8-bootstrap() {
   # Bootstrap + asks for extras
-  rails _8.1.3.1_ new "$1" -d postgresql \
+  rails _8.1.4_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
 rails8-tailwind() {
   # Tailwind + asks for extras
-  rails _8.1.3.1_ new "$1" -d postgresql \
+  rails _8.1.4_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
 rails8-custom() {
   # Asks CSS + asks for extras
-  rails _8.1.3.1_ new "$1" -d postgresql \
+  rails _8.1.4_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/custom.rb
 }
 
 rails8-api() {
   # JSON API + asks for extras
-  rails _8.1.3.1_ new "$1" --api -d postgresql \
+  rails _8.1.4_ new "$1" --api -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/api.rb
 }
 
@@ -269,7 +269,7 @@ rails8-bootstrap-all() {
   # Bootstrap + all extras
   DEVISE=true AUTH=false RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true FRIENDLY_URLS=true ADMIN=true CLAUDE_CODE=true \
-  rails _8.1.3.1_ new "$1" -d postgresql \
+  rails _8.1.4_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
@@ -277,14 +277,14 @@ rails8-tailwind-all() {
   # Tailwind + all extras
   DEVISE=true AUTH=false RUBY_LLM=true IMAGE_UPLOAD_CLOUDINARY=true NAVBAR=true TESTING=true DEV_TOOLS=true SECURITY=true \
   PAGINATION=true FRIENDLY_URLS=true ADMIN=true CLAUDE_CODE=true \
-  rails _8.1.3.1_ new "$1" -d postgresql \
+  rails _8.1.4_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
 rails8-api-all() {
   # JSON API + all extras (Devise + JWT, testing, dev tools, security, pagination, Cloudinary, RubyLLM, Claude Code)
   DEVISE=true TESTING=true DEV_TOOLS=true SECURITY=true PAGINATION=true IMAGE_UPLOAD_CLOUDINARY=true RUBY_LLM=true CLAUDE_CODE=true \
-  rails _8.1.3.1_ new "$1" --api -d postgresql \
+  rails _8.1.4_ new "$1" --api -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/api.rb
 }
 
@@ -296,7 +296,7 @@ rails8-bootstrap-min() {
   # Bootstrap only (no extras)
   DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
-  rails _8.1.3.1_ new "$1" -d postgresql \
+  rails _8.1.4_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/bootstrap.rb
 }
 
@@ -304,7 +304,7 @@ rails8-tailwind-min() {
   # Tailwind only (no extras)
   DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false DEV_TOOLS=false SECURITY=false \
   PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
-  rails _8.1.3.1_ new "$1" -d postgresql \
+  rails _8.1.4_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/tailwind.rb
 }
 
@@ -312,14 +312,14 @@ rails8-min() {
   # No CSS, no extras (bare Rails 8)
   BOOTSTRAP=false TAILWIND=false DEVISE=false AUTH=false RUBY_LLM=false IMAGE_UPLOAD_CLOUDINARY=false NAVBAR=false TESTING=false \
   DEV_TOOLS=false SECURITY=false PAGINATION=false FRIENDLY_URLS=false ADMIN=false CLAUDE_CODE=false \
-  rails _8.1.3.1_ new "$1" -d postgresql \
+  rails _8.1.4_ new "$1" -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/custom.rb
 }
 
 rails8-api-min() {
   # JSON API only (no extras)
   DEVISE=false TESTING=false DEV_TOOLS=false SECURITY=false PAGINATION=false IMAGE_UPLOAD_CLOUDINARY=false RUBY_LLM=false CLAUDE_CODE=false \
-  rails _8.1.3.1_ new "$1" --api -d postgresql \
+  rails _8.1.4_ new "$1" --api -d postgresql \
     -m $RAILS_TEMPLATES_BASE/rails-8/api.rb
 }
 
@@ -569,9 +569,10 @@ Or skip the default navbar entirely and build your own from scratch.
 - Try using local file path for testing
 
 ### Every sign-in or sign-up returns 500 (`ArgumentError` in `JSON.parse` / `unknown keyword: quirks_mode`)
-json 3.0 (September 2026) is incompatible with Rails 8.1.3.1 and 7.1.6. The templates pin
-`gem "json", "< 3"`. In an app generated before the pin, add that line to the Gemfile and run
-`bundle install`.
+json 3.0 (September 2026) is incompatible with Rails 8.1.3.1 and earlier and with 7.1.6.
+Rails 8.1.4 includes the fix (rails/rails#58601), so the Rails 8 templates no longer pin json;
+on an older Rails 8 app, upgrade to 8.1.4 or add `gem "json", "< 3"` and run `bundle install`.
+The Rails 7 templates keep the pin (Rails 7.1 is end-of-life).
 
 ### Image uploads fail with `LoadError: Could not open library 'vips'`
 Active Storage variants (resizing, thumbnails) use libvips through the `image_processing` gem.
