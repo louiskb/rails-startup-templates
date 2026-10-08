@@ -141,6 +141,36 @@ end
 
 # `rack-attack` (rate limiting)
 # Rate limiting: 5 login attempts/minute/IP, 100 API calls/minute/IP, blocks bad bots.
+#
+# The login throttle must match the app's real sign-in route, or it never fires
+# (it used to hard-code Devise's path, so native-auth apps had no throttle at all).
+# Detected from the app's files at apply time, so it works standalone and inside a
+# main template (which applies this module after its auth module):
+#   Devise                 → POST /users/sign_in
+#   Rails 8 native auth    → POST /session
+#   no auth                → no login throttle
+# The Devise path assumes `devise_for :users` (what these templates generate); an app
+# with another Devise model (e.g. `devise_for :admins`) needs its own path here.
+# API apps keep their own `/api/v1/users/sign_in` throttle below and ignore this.
+login_path =
+  if gemfile.match?(/^\s*gem ['"]devise['"]/) || File.exist?("config/initializers/devise.rb")
+    "/users/sign_in"
+  elsif File.exist?("app/controllers/sessions_controller.rb") && File.exist?("app/controllers/concerns/authentication.rb")
+    "/session"
+  end
+login_throttle =
+  if login_path
+    <<~RUBY.indent(2)
+      # Throttle sign-in attempts (brute-force protection) on #{login_path}
+      throttle("req/ip login", limit: 5, period: 1.minute) do |req|
+        req.ip if req.post? && req.path == "#{login_path}"
+      end
+
+    RUBY
+  else
+    "  # No sign-in route was found when this file was generated, so there is no login throttle.\n\n"
+  end
+
 unless File.exist?("config/initializers/rack_attack.rb")
   say "Creating rack-attack rate limiting...", :cyan
 
@@ -175,11 +205,7 @@ unless File.exist?("config/initializers/rack_attack.rb")
   else
     create_file "config/initializers/rack_attack.rb", <<~RUBY
       class Rack::Attack
-        # Throttle login attempts (brute force protection)
-        throttle("req/ip login", limit: 5, period: 1.minute) do |req|
-          req.ip if req.path == "/users/sign_in" && req.post?
-        end
-
+      #{login_throttle.chomp}
         # Throttle API requests
         throttle("req/ip api", limit: 100, period: 1.minute) do |req|
           req.ip if req.path.start_with?("/api")
@@ -193,13 +219,18 @@ unless File.exist?("config/initializers/rack_attack.rb")
     RUBY
   end
 
-  say "Rate limiting enabled (config/initializers/rack_attack.rb).", :green
+  login_note =
+    if api_only then ", login throttle on POST /api/v1/users/sign_in"
+    elsif login_path then ", login throttle on POST #{login_path}"
+    else ", no login throttle (no auth found)"
+    end
+  say "Rate limiting enabled (config/initializers/rack_attack.rb)#{login_note}.", :green
 
 else
   say "Rack::Attack initializer exists.", :yellow
 end
 
-# `rack-attack`: Rate limiting (5 logins/minute/IP, 100 API calls/minute/IP).
+# `rack-attack`: Rate limiting (5 sign-ins/minute/IP on the detected sign-in path, 100 API calls/minute/IP).
 # Rate limit exceeded? → `429 Too Many Requests`.
 # `rack-attack` gem docs = https://github.com/rack/rack-attack
 
